@@ -134,71 +134,89 @@ const STYLES = `
 }
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-html { scroll-behavior: smooth; }
-body { background: var(--ink); color: var(--txt); font-family: 'Karla', sans-serif; font-size: 14px; line-height: 1.5; }
+html { scroll-behavior: smooth; overflow-x: hidden; }
+body {
+  background: var(--ink); color: var(--txt);
+  font-family: 'Karla', sans-serif; font-size: 14px; line-height: 1.5;
+  overflow-x: hidden;
+  /* iOS safe area support */
+  padding-bottom: env(safe-area-inset-bottom);
+}
 
 /* ── SCROLLBAR ── */
-::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar { width: 4px; height: 4px; }
 ::-webkit-scrollbar-track { background: var(--deep); }
 ::-webkit-scrollbar-thumb { background: var(--line); border-radius: 3px; }
-::-webkit-scrollbar-thumb:hover { background: var(--wave); }
 
 /* ── APP SHELL ── */
-.shell { display: flex; flex-direction: column; min-height: 100vh; }
+.shell { display: flex; flex-direction: column; min-height: 100vh; min-height: -webkit-fill-available; width: 100%; overflow-x: hidden; }
 
 /* ── TOPBAR ── */
 .topbar {
   background: linear-gradient(90deg, var(--deep) 0%, #0a1f35 100%);
   border-bottom: 2px solid var(--wave);
-  padding: 12px 24px;
-  display: flex; align-items: center; gap: 20px;
+  padding: 10px 16px;
+  padding-top: calc(10px + env(safe-area-inset-top));
+  display: flex; align-items: center; gap: 12px;
   position: sticky; top: 0; z-index: 200;
   box-shadow: 0 4px 40px rgba(2,132,199,.2);
+  width: 100%;
 }
 .logo {
   font-family: 'Barlow Condensed', sans-serif;
-  font-size: 26px; font-weight: 900; letter-spacing: 3px;
-  color: var(--foam);
-  text-transform: uppercase;
+  font-size: 22px; font-weight: 900; letter-spacing: 2px;
+  color: var(--foam); text-transform: uppercase; white-space: nowrap;
 }
 .logo span { color: var(--mint); }
-.topbar-nav { display: flex; gap: 4px; margin-left: auto; }
-.tnav { padding: 6px 18px; border-radius: 6px; border: none; cursor: pointer;
-  font-family: 'Karla', sans-serif; font-size: 13px; font-weight: 700;
-  color: var(--sub); background: transparent; text-transform: uppercase; letter-spacing: 1px;
-  transition: all .18s; }
+.topbar-nav { display: flex; gap: 4px; margin-left: auto; flex-shrink: 0; }
+.tnav {
+  padding: 6px 12px; border-radius: 6px; border: none; cursor: pointer;
+  font-family: 'Karla', sans-serif; font-size: 12px; font-weight: 700;
+  color: var(--sub); background: transparent; text-transform: uppercase; letter-spacing: .8px;
+  transition: all .18s; white-space: nowrap;
+}
 .tnav:hover { color: var(--txt); background: var(--raised); }
 .tnav.on { background: var(--wave); color: #fff; box-shadow: 0 2px 16px rgba(2,132,199,.35); }
 
 /* ── MAIN ── */
-.main { flex: 1; padding: 24px; max-width: 1440px; margin: 0 auto; width: 100%; }
+.main { flex: 1; padding: 16px; width: 100%; overflow-x: hidden; }
+@media (min-width: 768px) { .main { padding: 24px; max-width: 1440px; margin: 0 auto; } }
 
 /* ── SIDEBAR LAYOUT ── */
-.sidebar-layout { display: grid; grid-template-columns: 280px 1fr; gap: 20px; }
-@media (max-width: 860px) { .sidebar-layout { grid-template-columns: 1fr; } }
+/* Mobile: single column stack */
+.sidebar-layout { display: flex; flex-direction: column; gap: 16px; width: 100%; }
+/* Desktop: side by side */
+@media (min-width: 900px) {
+  .sidebar-layout { display: grid; grid-template-columns: 280px 1fr; gap: 20px; }
+}
 
 /* ── PANEL ── */
 .panel {
   background: var(--panel);
   border: 1px solid var(--line);
   border-radius: 14px;
-  padding: 18px;
+  padding: 14px;
+  width: 100%;
 }
-.panel + .panel { margin-top: 14px; }
+@media (min-width: 768px) { .panel { padding: 18px; } }
+.panel + .panel { margin-top: 12px; }
 .panel-title {
   font-family: 'Barlow Condensed', sans-serif;
-  font-size: 15px; font-weight: 700; letter-spacing: 2px;
+  font-size: 14px; font-weight: 700; letter-spacing: 2px;
   color: var(--foam); text-transform: uppercase;
-  margin-bottom: 14px;
+  margin-bottom: 12px;
   display: flex; align-items: center; justify-content: space-between;
 }
 
 /* ── KPI ROW ── */
-.kpi-row { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 10px; }
+/* Mobile: 2 per row minimum */
+.kpi-row { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; width: 100%; }
+@media (min-width: 480px) { .kpi-row { grid-template-columns: repeat(3, 1fr); } }
+@media (min-width: 768px) { .kpi-row { grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 10px; } }
 .kpi {
   background: var(--raised);
   border: 1px solid var(--line);
-  border-radius: 10px; padding: 14px 12px; text-align: center;
+  border-radius: 10px; padding: 12px 8px; text-align: center;
   position: relative; overflow: hidden;
 }
 .kpi::before {
@@ -207,74 +225,80 @@ body { background: var(--ink); color: var(--txt); font-family: 'Karla', sans-ser
 }
 .kpi-val {
   font-family: 'Barlow Condensed', sans-serif;
-  font-size: 34px; font-weight: 900; line-height: 1;
+  font-size: 28px; font-weight: 900; line-height: 1;
   color: var(--accent, var(--foam));
 }
-.kpi-label { font-size: 10px; color: var(--sub); text-transform: uppercase; letter-spacing: 1.2px; margin-top: 4px; }
+@media (min-width: 768px) { .kpi-val { font-size: 34px; } }
+.kpi-label { font-size: 9px; color: var(--sub); text-transform: uppercase; letter-spacing: 1px; margin-top: 4px; }
 
 /* ── STAT GRID ── */
-.stat-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 8px; }
+/* Mobile: 2 per row */
+.stat-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; width: 100%; }
+@media (min-width: 480px) { .stat-grid { grid-template-columns: repeat(3, 1fr); } }
+@media (min-width: 768px) { .stat-grid { grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 8px; } }
 .stat {
   background: var(--raised); border: 1px solid var(--line); border-radius: 8px;
   padding: 8px 10px; display: flex; justify-content: space-between; align-items: center;
+  min-width: 0;
 }
-.stat-label { font-size: 11px; color: var(--sub); }
-.stat-val { font-family: 'Barlow Condensed', sans-serif; font-size: 22px; font-weight: 700; color: var(--txt); }
+.stat-label { font-size: 10px; color: var(--sub); flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; padding-right: 4px; }
+.stat-val { font-family: 'Barlow Condensed', sans-serif; font-size: 20px; font-weight: 700; color: var(--txt); flex-shrink: 0; }
 
 /* ── PLAYER LIST ── */
-.p-list { display: flex; flex-direction: column; gap: 6px; }
+.p-list { display: flex; flex-direction: column; gap: 6px; width: 100%; }
 .p-row {
   background: var(--raised); border: 1px solid var(--line); border-radius: 10px;
-  padding: 10px 14px; cursor: pointer; display: flex; align-items: center; gap: 12px;
-  transition: border-color .15s, transform .15s;
+  padding: 10px 12px; cursor: pointer; display: flex; align-items: center; gap: 10px;
+  transition: border-color .15s; width: 100%; min-width: 0;
 }
-.p-row:hover { border-color: var(--foam); transform: translateX(2px); }
+.p-row:active { border-color: var(--foam); }
 .p-row.sel { border-color: var(--wave); background: #0e2540; }
-.p-num { font-family: 'Barlow Condensed', sans-serif; font-size: 28px; font-weight: 900; color: var(--wave); width: 32px; text-align: center; line-height: 1; }
-.p-name { font-weight: 700; font-size: 14px; }
-.p-pos  { font-size: 11px; color: var(--sub); text-transform: uppercase; letter-spacing: .8px; }
+.p-num { font-family: 'Barlow Condensed', sans-serif; font-size: 26px; font-weight: 900; color: var(--wave); width: 30px; text-align: center; line-height: 1; flex-shrink: 0; }
+.p-name { font-weight: 700; font-size: 14px; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.p-pos  { font-size: 10px; color: var(--sub); text-transform: uppercase; letter-spacing: .8px; }
 
 /* ── SEASON PILLS ── */
 .s-pills { display: flex; flex-wrap: wrap; gap: 6px; }
 .s-pill {
-  padding: 5px 12px; border-radius: 20px; font-size: 11px; font-weight: 700;
-  letter-spacing: .8px; text-transform: uppercase; cursor: pointer;
+  padding: 5px 10px; border-radius: 20px; font-size: 10px; font-weight: 700;
+  letter-spacing: .6px; text-transform: uppercase; cursor: pointer;
   border: 1px solid var(--line); background: var(--raised); color: var(--sub);
-  transition: all .15s;
+  transition: all .15s; white-space: nowrap;
 }
-.s-pill:hover { border-color: var(--foam); color: var(--foam); }
-.s-pill.on  { background: var(--wave); border-color: var(--wave); color: #fff; box-shadow: 0 2px 10px rgba(2,132,199,.3); }
-.s-pill.jun { --pill-col: var(--sub); }
-.s-pill.sen { --pill-col: var(--mint); }
-.s-pill.pro { --pill-col: var(--gold); }
-.type-dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; margin-right: 5px; background: var(--sub); }
+.s-pill:active { border-color: var(--foam); color: var(--foam); }
+.s-pill.on { background: var(--wave); border-color: var(--wave); color: #fff; box-shadow: 0 2px 10px rgba(2,132,199,.3); }
+.type-dot { display: inline-block; width: 6px; height: 6px; border-radius: 50%; margin-right: 4px; background: var(--sub); }
 .type-dot.junior       { background: var(--sub); }
 .type-dot.senior       { background: var(--mint); }
 .type-dot.professional { background: var(--gold); }
 .type-dot.standard     { background: var(--foam); }
 
 /* ── TABS ── */
-.tab-bar { display: flex; gap: 3px; background: var(--raised); padding: 4px; border-radius: 9px; width: fit-content; }
-.tb { padding: 6px 16px; border-radius: 6px; border: none; cursor: pointer;
-  font-family: 'Karla', sans-serif; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .8px;
-  color: var(--sub); background: transparent; transition: all .15s; }
+.tab-bar { display: flex; gap: 3px; background: var(--raised); padding: 4px; border-radius: 9px; width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+.tb {
+  padding: 7px 12px; border-radius: 6px; border: none; cursor: pointer;
+  font-family: 'Karla', sans-serif; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .6px;
+  color: var(--sub); background: transparent; transition: all .15s; white-space: nowrap; flex: 1;
+}
 .tb.on { background: var(--wave); color: #fff; }
-.tb:hover:not(.on) { color: var(--txt); }
 
 /* ── BUTTONS ── */
-.btn { padding: 7px 18px; border-radius: 7px; border: none; cursor: pointer;
+.btn {
+  padding: 8px 14px; border-radius: 7px; border: none; cursor: pointer;
   font-family: 'Karla', sans-serif; font-size: 12px; font-weight: 700;
-  text-transform: uppercase; letter-spacing: .8px; transition: all .15s; }
+  text-transform: uppercase; letter-spacing: .8px; transition: all .15s;
+  white-space: nowrap; -webkit-tap-highlight-color: transparent;
+}
 .btn-wave  { background: var(--wave); color: #fff; }
-.btn-wave:hover  { background: var(--foam); color: var(--ink); box-shadow: 0 2px 14px rgba(2,132,199,.4); }
+.btn-wave:active  { background: var(--foam); color: var(--ink); }
 .btn-mint  { background: var(--mint); color: var(--ink); }
-.btn-mint:hover  { background: #34d399; }
+.btn-mint:active  { background: #34d399; }
 .btn-ghost { background: transparent; color: var(--sub); border: 1px solid var(--line); }
-.btn-ghost:hover { color: var(--txt); border-color: var(--sub); }
+.btn-ghost:active { color: var(--txt); border-color: var(--sub); }
 .btn-rose  { background: transparent; color: var(--rose); border: 1px solid var(--rose); }
-.btn-rose:hover  { background: var(--rose); color: #fff; }
+.btn-rose:active  { background: var(--rose); color: #fff; }
 .btn-gold  { background: var(--gold); color: var(--ink); }
-.btn-sm { padding: 4px 12px; font-size: 11px; }
+.btn-sm { padding: 5px 12px; font-size: 11px; }
 .btn-xs { padding: 3px 8px; font-size: 10px; }
 
 /* ── FORMS ── */
@@ -282,41 +306,57 @@ body { background: var(--ink); color: var(--txt); font-family: 'Karla', sans-ser
 .f-label { font-size: 10px; color: var(--sub); text-transform: uppercase; letter-spacing: 1px; }
 .f-input {
   background: var(--raised); border: 1px solid var(--line); color: var(--txt);
-  border-radius: 7px; padding: 8px 10px; font-family: 'Karla', sans-serif; font-size: 13px;
+  border-radius: 7px; padding: 10px 12px; font-family: 'Karla', sans-serif; font-size: 16px;
   transition: border-color .15s; width: 100%;
+  /* Prevents iOS zoom on focus - must be 16px */
+  -webkit-appearance: none;
 }
 .f-input:focus { outline: none; border-color: var(--wave); }
 .f-input option { background: var(--deep); }
-.f-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 12px; }
-.f-grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+.f-grid { display: grid; grid-template-columns: 1fr; gap: 12px; }
+@media (min-width: 480px) { .f-grid { grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); } }
 .f-grid-2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+.f-grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
 
 /* ── MODAL ── */
-.overlay { position: fixed; inset: 0; background: rgba(0,0,0,.75); display: flex; align-items: center; justify-content: center; z-index: 999; padding: 16px; }
-.modal {
-  background: var(--deep); border: 1px solid var(--line); border-radius: 18px;
-  padding: 26px; width: 100%; max-width: 680px; max-height: 92vh; overflow-y: auto;
-  box-shadow: 0 24px 80px rgba(0,0,0,.7);
-  animation: slideUp .2s ease;
+.overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,.8);
+  display: flex; align-items: flex-end; justify-content: center;
+  z-index: 999; padding: 0;
 }
-.modal-sm { max-width: 440px; }
-@keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-.modal-title { font-family: 'Barlow Condensed', sans-serif; font-size: 22px; font-weight: 900; letter-spacing: 2px; color: var(--foam); text-transform: uppercase; margin-bottom: 18px; }
+@media (min-width: 640px) {
+  .overlay { align-items: center; padding: 16px; }
+}
+.modal {
+  background: var(--deep); border: 1px solid var(--line);
+  border-radius: 20px 20px 0 0;
+  padding: 20px 16px;
+  padding-bottom: calc(20px + env(safe-area-inset-bottom));
+  width: 100%; max-height: 92vh; overflow-y: auto; -webkit-overflow-scrolling: touch;
+  box-shadow: 0 -10px 60px rgba(0,0,0,.6);
+  animation: slideUp .25s ease;
+}
+@media (min-width: 640px) {
+  .modal { border-radius: 18px; padding: 26px; max-width: 680px; }
+  .modal-sm { max-width: 440px; }
+}
+@keyframes slideUp { from { opacity: 0; transform: translateY(40px); } to { opacity: 1; transform: translateY(0); } }
+.modal-title { font-family: 'Barlow Condensed', sans-serif; font-size: 20px; font-weight: 900; letter-spacing: 2px; color: var(--foam); text-transform: uppercase; margin-bottom: 16px; }
 
 /* ── DIVIDER ── */
-.div { height: 1px; background: var(--line); margin: 16px 0; }
+.div { height: 1px; background: var(--line); margin: 14px 0; }
 
 /* ── TABLE ── */
 .tbl { width: 100%; border-collapse: collapse; }
-.tbl th { font-size: 10px; color: var(--sub); text-transform: uppercase; letter-spacing: 1px; padding: 7px 10px; text-align: left; border-bottom: 1px solid var(--line); }
-.tbl td { padding: 8px 10px; font-size: 13px; border-bottom: 1px solid rgba(30,58,88,.4); }
+.tbl th { font-size: 10px; color: var(--sub); text-transform: uppercase; letter-spacing: 1px; padding: 7px 8px; text-align: left; border-bottom: 1px solid var(--line); white-space: nowrap; }
+.tbl td { padding: 8px 8px; font-size: 13px; border-bottom: 1px solid rgba(30,58,88,.4); }
 .tbl tr:last-child td { border-bottom: none; }
 .tbl .hi { color: var(--mint); font-weight: 700; }
 .tbl .gold { color: var(--gold); font-weight: 700; }
 
 /* ── GAME LOG ── */
-.g-entry { background: var(--raised); border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; margin-bottom: 8px; }
-.g-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+.g-entry { background: var(--raised); border: 1px solid var(--line); border-radius: 10px; padding: 12px; margin-bottom: 8px; }
+.g-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; flex-wrap: wrap; gap: 6px; }
 .g-opp { font-weight: 700; font-size: 15px; }
 .g-date { font-size: 11px; color: var(--sub); }
 
@@ -324,11 +364,14 @@ body { background: var(--ink); color: var(--txt); font-family: 'Karla', sans-ser
 .s-header {
   background: linear-gradient(135deg, var(--raised) 0%, #102237 100%);
   border: 1px solid var(--line); border-radius: 12px;
-  padding: 14px 18px; margin-bottom: 14px;
-  display: flex; align-items: center; gap: 16px; flex-wrap: wrap;
+  padding: 12px 14px; margin-bottom: 14px;
+  display: flex; flex-direction: column; gap: 10px;
 }
-.s-title { font-family: 'Barlow Condensed', sans-serif; font-size: 22px; font-weight: 900; letter-spacing: 1px; }
-.s-meta { font-size: 11px; color: var(--sub); }
+@media (min-width: 640px) {
+  .s-header { flex-direction: row; align-items: center; gap: 16px; flex-wrap: wrap; }
+}
+.s-title { font-family: 'Barlow Condensed', sans-serif; font-size: 20px; font-weight: 900; letter-spacing: 1px; }
+.s-actions { display: flex; gap: 6px; flex-wrap: wrap; }
 
 /* ── CATEGORY BADGES ── */
 .cat-badge { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .8px; }
@@ -339,12 +382,13 @@ body { background: var(--ink); color: var(--txt); font-family: 'Karla', sans-ser
 /* ── CAREER BANNER ── */
 .career-banner {
   background: linear-gradient(135deg, #0a1e33 0%, #071629 60%, #0b2240 100%);
-  border: 1px solid var(--wave); border-radius: 14px; padding: 18px 22px;
-  margin-bottom: 18px; position: relative; overflow: hidden;
+  border: 1px solid var(--wave); border-radius: 14px; padding: 14px 16px;
+  margin-bottom: 16px; position: relative; overflow: hidden; width: 100%;
 }
+@media (min-width: 768px) { .career-banner { padding: 18px 22px; margin-bottom: 18px; } }
 .career-banner::after {
   content: ''; position: absolute; top: -30px; right: -30px;
-  width: 160px; height: 160px; border-radius: 50%;
+  width: 120px; height: 120px; border-radius: 50%;
   background: radial-gradient(circle, rgba(2,132,199,.12) 0%, transparent 70%);
 }
 
@@ -352,16 +396,28 @@ body { background: var(--ink); color: var(--txt); font-family: 'Karla', sans-ser
 .swim-best { color: var(--mint); font-weight: 700; font-family: 'Barlow Condensed', sans-serif; font-size: 18px; }
 
 /* ── EMPTY ── */
-.empty { text-align: center; padding: 36px 20px; color: var(--sub); }
-.empty-icon { font-size: 44px; margin-bottom: 10px; }
+.empty { text-align: center; padding: 32px 16px; color: var(--sub); }
+.empty-icon { font-size: 40px; margin-bottom: 10px; }
 
-/* ── NOTICE CHIP ── */
-.chip { display: inline-flex; align-items: center; gap: 5px; padding: 3px 10px; border-radius: 20px; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .8px; }
+/* ── CHIPS ── */
+.chip { display: inline-flex; align-items: center; gap: 5px; padding: 3px 8px; border-radius: 20px; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .8px; }
 .chip-wave { background: rgba(2,132,199,.15); color: var(--foam); border: 1px solid rgba(2,132,199,.25); }
 .chip-mint { background: rgba(16,185,129,.15); color: var(--mint); border: 1px solid rgba(16,185,129,.25); }
 .chip-gold { background: rgba(245,158,11,.15); color: var(--gold); border: 1px solid rgba(245,158,11,.25); }
 .chip-rose { background: rgba(244,63,94,.15); color: var(--rose); border: 1px solid rgba(244,63,94,.25); }
 .chip-sub  { background: rgba(124,160,190,.1); color: var(--sub); border: 1px solid rgba(124,160,190,.2); }
+
+/* ── TWO COL ── */
+.two-col { display: grid; grid-template-columns: 1fr; gap: 12px; width: 100%; }
+@media (min-width: 700px) { .two-col { grid-template-columns: 1fr 1fr; gap: 16px; } }
+
+/* ── SCROLL X (tables on mobile) ── */
+.scroll-x { overflow-x: auto; -webkit-overflow-scrolling: touch; width: 100%; }
+.scroll-x table { min-width: 500px; }
+
+/* ── PLAYER HEADER (detail page) ── */
+.player-header { display: flex; flex-direction: column; gap: 10px; margin-bottom: 16px; }
+@media (min-width: 480px) { .player-header { flex-direction: row; align-items: center; flex-wrap: wrap; } }
 
 /* ── UTILS ── */
 .flex { display: flex; }
@@ -393,13 +449,11 @@ body { background: var(--ink); color: var(--txt); font-family: 'Karla', sans-ser
 .text-rose { color: var(--rose); }
 .text-bold { font-weight: 700; }
 .w-full { width: 100%; }
+.min-w-0 { min-width: 0; }
 .spinner { display: inline-block; width: 22px; height: 22px; border: 2px solid var(--line); border-top-color: var(--wave); border-radius: 50%; animation: spin .7s linear infinite; }
 @keyframes spin { to { transform: rotate(360deg); } }
 .load-screen { min-height: 100vh; display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 14px; color: var(--sub); }
-.section-label { font-family: 'Barlow Condensed', sans-serif; font-size: 12px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: var(--sub); margin-bottom: 8px; }
-.two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
-@media (max-width: 640px) { .two-col { grid-template-columns: 1fr; } }
-.scroll-x { overflow-x: auto; }
+.section-label { font-family: 'Barlow Condensed', sans-serif; font-size: 11px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: var(--sub); margin-bottom: 8px; }
 `;
 
 // ─── SMALL COMPONENTS ─────────────────────────────────────────────────────────
@@ -621,20 +675,20 @@ function SeasonView({ season, onUpdateSeason, onDeleteSeason }) {
     <div>
       {/* Season header */}
       <div className="s-header mb-4">
-        <div>
-          <div className="flex items-center gap-2 mb-1">
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div className="flex items-center gap-2 mb-1" style={{ flexWrap: "wrap" }}>
             <span className="s-title">{season.label}</span>
             <TypeBadge type={season.type} />
           </div>
           <div className="text-xs text-sub">
             {season.startDate && season.endDate ? `${season.startDate} → ${season.endDate}` : season.startDate || "No dates set"}
-            {season.notes && <span style={{ marginLeft: 10 }}>· {season.notes}</span>}
+            {season.notes && <span style={{ marginLeft: 8 }}>· {season.notes}</span>}
           </div>
         </div>
-        <div className="flex gap-2 ml-auto">
+        <div className="s-actions">
           <button className="btn btn-wave btn-sm" onClick={() => setLogGame(true)}>+ Game</button>
-          <button className="btn btn-mint btn-sm" onClick={() => setLogSwim(true)}>+ Swim Time</button>
-          <button className="btn btn-rose btn-sm" onClick={() => { if (window.confirm("Delete this season and all its data?")) onDeleteSeason(); }}>Delete Season</button>
+          <button className="btn btn-mint btn-sm" onClick={() => setLogSwim(true)}>+ Swim</button>
+          <button className="btn btn-rose btn-sm" onClick={() => { if (window.confirm("Delete this season and all its data?")) onDeleteSeason(); }}>Delete</button>
         </div>
       </div>
 
@@ -816,10 +870,10 @@ function CareerView({ player }) {
       <div className="career-banner mb-4">
         <div className="flex items-center justify-between flex-wrap gap-3 mb-3">
           <div>
-            <div style={{ fontFamily: "'Barlow Condensed', sans-serif", fontSize: 26, fontWeight: 900, letterSpacing: 2, color: "var(--foam)" }}>
+            <div style={{ fontFamily: "'Barlow Condensed', sans-serif", fontSize: 22, fontWeight: 900, letterSpacing: 2, color: "var(--foam)" }}>
               CAREER STATS
             </div>
-            <div className="text-xs text-sub">{activeSeason.length} of {player.seasons.length} seasons selected · {allGames.length} total games</div>
+            <div className="text-xs text-sub">{activeSeason.length} of {player.seasons.length} seasons · {allGames.length} games</div>
           </div>
           <button className="btn btn-ghost btn-sm" onClick={toggleAll}>
             {selected.size === player.seasons.length ? "Deselect All" : "Select All"}
@@ -965,18 +1019,18 @@ function PlayerDetail({ player, onBack, onUpdate }) {
   return (
     <div>
       {/* Player header */}
-      <div className="flex items-center gap-3 mb-4" style={{ flexWrap: "wrap" }}>
+      <div className="player-header mb-4">
         <button className="btn btn-ghost btn-sm" onClick={onBack}>← Roster</button>
-        <div className="flex items-center gap-3">
-          <span style={{ fontFamily: "'Barlow Condensed', sans-serif", fontSize: 44, fontWeight: 900, color: "var(--wave)", lineHeight: 1 }}>
+        <div className="flex items-center gap-3" style={{ flex: 1, minWidth: 0 }}>
+          <span style={{ fontFamily: "'Barlow Condensed', sans-serif", fontSize: 40, fontWeight: 900, color: "var(--wave)", lineHeight: 1, flexShrink: 0 }}>
             #{player.number || "?"}
           </span>
-          <div>
-            <div style={{ fontSize: 20, fontWeight: 700 }}>{player.name}</div>
+          <div style={{ minWidth: 0 }}>
+            <div style={{ fontSize: 18, fontWeight: 700, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{player.name}</div>
             <div className="text-xs text-sub" style={{ textTransform: "uppercase", letterSpacing: 1 }}>{player.position}</div>
           </div>
         </div>
-        <button className="btn btn-wave btn-sm ml-auto" onClick={() => setAddSeason(true)}>+ Season</button>
+        <button className="btn btn-wave btn-sm" onClick={() => setAddSeason(true)}>+ Season</button>
       </div>
 
       {/* Season selector */}
@@ -1187,10 +1241,10 @@ export default function App() {
           />
         ) : page === "roster" ? (
           <div className="sidebar-layout">
-            {/* Sidebar */}
+            {/* Sidebar: player list */}
             <div>
               <div className="flex items-center justify-between mb-3">
-                <span style={{ fontFamily: "'Barlow Condensed', sans-serif", fontSize: 16, fontWeight: 700, letterSpacing: 2, color: "var(--foam)", textTransform: "uppercase" }}>
+                <span style={{ fontFamily: "'Barlow Condensed', sans-serif", fontSize: 15, fontWeight: 700, letterSpacing: 2, color: "var(--foam)", textTransform: "uppercase" }}>
                   Roster ({players.length})
                 </span>
                 <button className="btn btn-wave btn-sm" onClick={() => setAddPlayer(true)}>+ Player</button>
@@ -1203,19 +1257,19 @@ export default function App() {
                 <div className="p-list">
                   {[...players].sort((a, b) => (parseInt(a.number) || 99) - (parseInt(b.number) || 99)).map(p => {
                     const allGames = p.seasons.flatMap(s => s.games);
-                    const { gp, totals } = calcKPIs(allGames);
+                    const { gp } = calcKPIs(allGames);
                     return (
                       <div key={p.id} className={`p-row ${selectedId === p.id ? "sel" : ""}`} onClick={() => { setSelectedId(p.id); }}>
                         <div className="p-num">#{p.number || "?"}</div>
-                        <div style={{ flex: 1 }}>
+                        <div style={{ flex: 1, minWidth: 0 }}>
                           <div className="p-name">{p.name}</div>
                           <div className="p-pos">{p.position}</div>
                         </div>
-                        <div className="flex flex-col items-center" style={{ gap: 2 }}>
+                        <div className="flex flex-col items-center" style={{ gap: 2, flexShrink: 0 }}>
                           <span className="chip chip-wave">{p.seasons.length}S</span>
                           <span className="chip chip-sub">{gp}G</span>
                         </div>
-                        <div className="flex gap-1" onClick={e => e.stopPropagation()}>
+                        <div className="flex gap-1" style={{ flexShrink: 0 }} onClick={e => e.stopPropagation()}>
                           <button className="btn btn-ghost btn-xs" onClick={() => setEditPlayer(p)}>✏️</button>
                           <button className="btn btn-rose btn-xs" onClick={() => handleDeletePlayer(p.id)}>✕</button>
                         </div>
@@ -1226,7 +1280,7 @@ export default function App() {
               )}
             </div>
 
-            {/* Main panel: quick snapshot */}
+            {/* Quick snapshot — hidden on mobile to avoid clutter, shown on desktop */}
             <div>
               <div className="panel">
                 <div className="panel-title">Quick Snapshot</div>
@@ -1237,9 +1291,9 @@ export default function App() {
                     <table className="tbl">
                       <thead>
                         <tr>
-                          <th>#</th><th>Name</th><th>Pos</th><th>Seasons</th><th>GP</th>
-                          <th>Goals</th><th>Ast</th><th>Shoot%</th><th>Steals</th><th>Blk</th><th>API</th>
-                          <th>Swim Best (50Fr)</th>
+                          <th>#</th><th>Name</th><th>Pos</th><th>S</th><th>GP</th>
+                          <th>G</th><th>Ast</th><th>Sh%</th><th>Stl</th><th>Blk</th><th>API</th>
+                          <th>50Fr Best</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -1250,7 +1304,7 @@ export default function App() {
                           return (
                             <tr key={p.id} style={{ cursor: "pointer" }} onClick={() => setSelectedId(p.id)}>
                               <td style={{ fontFamily: "'Barlow Condensed', sans-serif", fontSize: 18, color: "var(--wave)" }}>#{p.number}</td>
-                              <td style={{ fontWeight: 700 }}>{p.name}</td>
+                              <td style={{ fontWeight: 700, whiteSpace: "nowrap" }}>{p.name}</td>
                               <td className="text-sub">{p.position}</td>
                               <td>{p.seasons.length}</td>
                               <td>{gp}</td>

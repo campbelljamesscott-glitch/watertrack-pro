@@ -175,6 +175,25 @@ input[type=color]{width:36px;height:36px;border-radius:8px;border:2px solid var(
 .tdot.junior{background:var(--sub)}.tdot.senior{background:var(--mint)}.tdot.professional{background:var(--gold)}.tdot.standard{background:var(--foam)}
 .admin-badge{background:rgba(245,158,11,.15);color:var(--gold);border:1px solid rgba(245,158,11,.3);padding:2px 8px;border-radius:20px;font-size:10px;font-weight:700;text-transform:uppercase}
 .coach-badge{background:rgba(56,189,248,.15);color:var(--foam);border:1px solid rgba(56,189,248,.3);padding:2px 8px;border-radius:20px;font-size:10px;font-weight:700;text-transform:uppercase}
+/* SUPER ADMIN */
+#superadmin-screen{min-height:100vh;display:flex;flex-direction:column;background:#0a0a0f;color:#e0eaf4;overflow-x:hidden}
+.sa-topbar{background:linear-gradient(90deg,#1a0a2e,#0d0520);border-bottom:2px solid #7c3aed;padding:12px 16px;display:flex;align-items:center;gap:12px;position:sticky;top:0;z-index:100}
+.sa-logo{font-family:'Barlow Condensed',sans-serif;font-size:18px;font-weight:900;letter-spacing:2px;color:#a78bfa;text-transform:uppercase}
+.sa-badge{background:rgba(124,58,237,.2);color:#a78bfa;border:1px solid rgba(124,58,237,.4);padding:3px 10px;border-radius:20px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px}
+.sa-main{flex:1;padding:16px;max-width:900px;width:100%;margin:0 auto}
+.sa-panel{background:#12091f;border:1px solid #2d1f4a;border-radius:14px;padding:14px;margin-bottom:12px}
+.sa-panel-title{font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:700;letter-spacing:2px;color:#a78bfa;text-transform:uppercase;margin-bottom:12px}
+.sa-club-row{background:#1a0f2e;border:1px solid #2d1f4a;border-radius:10px;padding:12px 14px;margin-bottom:8px;cursor:pointer;display:flex;align-items:center;gap:12px}
+.sa-club-row:active{border-color:#7c3aed}
+.sa-user-row{background:#1a0f2e;border:1px solid #2d1f4a;border-radius:10px;padding:10px 12px;margin-bottom:6px;display:flex;align-items:center;gap:10px}
+.sa-stat{background:#1a0f2e;border:1px solid #2d1f4a;border-radius:8px;padding:10px 12px;text-align:center}
+.sa-stat-val{font-family:'Barlow Condensed',sans-serif;font-size:28px;font-weight:900;color:#a78bfa}
+.sa-stat-label{font-size:10px;color:#6b7280;text-transform:uppercase;letter-spacing:1px;margin-top:2px}
+.sa-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+@media(min-width:400px){.sa-grid{grid-template-columns:repeat(4,1fr)}}
+.impersonate-banner{background:linear-gradient(90deg,#1a0a2e,#0d0520);border-bottom:3px solid #7c3aed;padding:8px 14px;display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap}
+.impersonate-label{font-size:11px;color:#a78bfa;font-weight:700;text-transform:uppercase;letter-spacing:1px}
+.btn-purple{background:#7c3aed;color:#fff;padding:6px 14px;border-radius:7px;border:none;font-size:11px;font-weight:700;text-transform:uppercase;cursor:pointer;white-space:nowrap}
 </style>
 </head>
 <body>
@@ -222,6 +241,23 @@ input[type=color]{width:36px;height:36px;border-radius:8px;border:2px solid var(
     </nav>
   </header>
   <main id="main"><div class="loading"><div class="spinner"></div><span>Loading...</span></div></main>
+</div>
+
+<!-- SUPER ADMIN SCREEN -->
+<div id="superadmin-screen" class="hidden">
+  <div class="sa-topbar">
+    <div class="sa-logo">⚡ WaterTrack</div>
+    <span class="sa-badge">Super Admin</span>
+    <div style="margin-left:auto;display:flex;gap:8px">
+      <button class="btn-purple" onclick="exitSuperAdmin()">Exit SA</button>
+      <button class="btn-purple" style="background:rgba(244,63,94,.3);color:var(--rose);border:1px solid var(--rose)" onclick="signOut()">Sign Out</button>
+    </div>
+  </div>
+  <div id="impersonate-banner" class="hidden impersonate-banner">
+    <span class="impersonate-label">👁 Viewing as: <span id="impersonate-label-name"></span></span>
+    <button class="btn-purple" onclick="stopImpersonating()">← Back to SA</button>
+  </div>
+  <div class="sa-main" id="sa-main"></div>
 </div>
 
 <!-- MODAL -->
@@ -1009,12 +1045,414 @@ async function checkPendingInvites(user) {
   }
 }
 
-// Override afterLogin to check invites first
-const _origAfterLogin = afterLogin;
+// ── SUPER ADMIN ───────────────────────────────────────────────────────────────
+let saState = {
+  allClubs: [], allMembers: [], allPlayers: [],
+  impersonating: null,  // { userId, email, club }
+  saView: 'home',       // 'home' | 'club' | 'user' | 'impersonating'
+  selectedClubId: null,
+  selectedUserId: null,
+};
+
+async function checkSuperAdmin(user) {
+  const {data} = await sb.from('super_admins').select('id').eq('user_id', user.id);
+  return data && data.length > 0;
+}
+
+async function enterSuperAdmin() {
+  ['auth-screen','club-screen','app'].forEach(id => document.getElementById(id).classList.add('hidden'));
+  document.getElementById('superadmin-screen').classList.remove('hidden');
+  document.getElementById('impersonate-banner').classList.add('hidden');
+  saState.saView = 'home';
+  saState.impersonating = null;
+  await loadSuperAdminData();
+  renderSuperAdmin();
+}
+
+function exitSuperAdmin() {
+  document.getElementById('superadmin-screen').classList.add('hidden');
+  showClubScreen();
+}
+
+async function loadSuperAdminData() {
+  const [clubsRes, membersRes, playersRes] = await Promise.all([
+    sb.from('clubs').select('*').order('created_at'),
+    sb.from('club_members').select('*').order('created_at'),
+    sb.from('players').select('*').order('name'),
+  ]);
+  saState.allClubs = clubsRes.data || [];
+  saState.allMembers = membersRes.data || [];
+  saState.allPlayers = playersRes.data || [];
+}
+
+async function renderSuperAdmin() {
+  const main = document.getElementById('sa-main');
+  main.innerHTML = '<div class="loading"><div class="spinner" style="border-top-color:#7c3aed"></div><span style="color:#a78bfa">Loading...</span></div>';
+
+  const [totalPlayers, totalGames, totalSeasons, totalSwim] = await Promise.all([
+    sb.from('players').select('id', {count:'exact',head:true}),
+    sb.from('games').select('id', {count:'exact',head:true}),
+    sb.from('seasons').select('id', {count:'exact',head:true}),
+    sb.from('swim_times').select('id', {count:'exact',head:true}),
+  ]);
+
+  // Get unique user list from clubs + members
+  const userMap = {};
+  saState.allClubs.forEach(c => {
+    if (!userMap[c.created_by]) userMap[c.created_by] = { userId: c.created_by, email: '(admin)', clubs: [], role: 'admin' };
+    userMap[c.created_by].clubs.push(c.name);
+  });
+  saState.allMembers.forEach(m => {
+    const key = m.user_id || m.invited_email;
+    if (!userMap[key]) userMap[key] = { userId: m.user_id, email: m.invited_email||'pending', clubs: [], role: m.role, status: m.status };
+    if (m.club_id) {
+      const club = saState.allClubs.find(c=>c.id===m.club_id);
+      if (club) userMap[key].clubs.push(club.name);
+    }
+  });
+  saState.userMap = userMap;
+
+  main.innerHTML = `
+    <div style="font-family:'Barlow Condensed',sans-serif;font-size:22px;font-weight:900;letter-spacing:2px;color:#a78bfa;margin-bottom:16px">Platform Overview</div>
+
+    <div class="sa-grid" style="margin-bottom:14px">
+      <div class="sa-stat"><div class="sa-stat-val">${saState.allClubs.length}</div><div class="sa-stat-label">Clubs</div></div>
+      <div class="sa-stat"><div class="sa-stat-val">${Object.keys(userMap).length}</div><div class="sa-stat-label">Users</div></div>
+      <div class="sa-stat"><div class="sa-stat-val">${totalPlayers.count||0}</div><div class="sa-stat-label">Players</div></div>
+      <div class="sa-stat"><div class="sa-stat-val">${totalGames.count||0}</div><div class="sa-stat-label">Games</div></div>
+    </div>
+
+    <!-- CLUBS -->
+    <div class="sa-panel" style="margin-bottom:12px">
+      <div class="sa-panel-title">All Clubs (${saState.allClubs.length})</div>
+      ${saState.allClubs.length === 0
+        ? '<div style="text-align:center;padding:20px;color:#6b7280">No clubs yet</div>'
+        : saState.allClubs.map(c => {
+            const memberCount = saState.allMembers.filter(m=>m.club_id===c.id).length;
+            const playerCount = saState.allPlayers.filter(p=>p.club_id===c.id).length;
+            return `<div class="sa-club-row" onclick="saViewClub('${c.id}')">
+              <div style="width:40px;height:40px;border-radius:8px;background:${c.primary_color||'#7c3aed'};flex-shrink:0;display:flex;align-items:center;justify-content:center;font-family:'Barlow Condensed',sans-serif;font-size:18px;font-weight:900;color:#fff;overflow:hidden">
+                ${c.logo_url?`<img src="${c.logo_url}" style="width:100%;height:100%;object-fit:cover">`:c.name.charAt(0)}
+              </div>
+              <div style="flex:1;min-width:0">
+                <div style="font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${c.name}</div>
+                <div style="font-size:11px;color:#6b7280">${memberCount+1} members · ${playerCount} players</div>
+              </div>
+              <span style="color:#a78bfa;font-size:18px;flex-shrink:0">›</span>
+            </div>`;
+          }).join('')}
+    </div>
+
+    <!-- UNASSIGNED PLAYERS -->
+    ${(() => {
+      const unassigned = saState.allPlayers.filter(p=>!p.club_id);
+      if (unassigned.length === 0) return '';
+      return `<div class="sa-panel" style="margin-bottom:12px">
+        <div class="sa-panel-title">⚠️ Unassigned Players (${unassigned.length})</div>
+        <div style="font-size:11px;color:#6b7280;margin-bottom:10px">Players not linked to any club</div>
+        ${unassigned.map(p=>`
+          <div class="sa-user-row">
+            <div style="font-family:'Barlow Condensed',sans-serif;font-size:20px;font-weight:900;color:#7c3aed;width:26px;flex-shrink:0">#${p.number||'?'}</div>
+            <div style="flex:1;min-width:0"><div style="font-weight:700">${p.name}</div><div style="font-size:11px;color:#6b7280">${p.position}</div></div>
+            <button class="btn-purple btn-xs" onclick="saViewUserById('${p.user_id}')">View User</button>
+          </div>`).join('')}
+      </div>`;
+    })()}
+
+    <!-- ALL USERS -->
+    <div class="sa-panel">
+      <div class="sa-panel-title">All Users (${Object.keys(userMap).length})</div>
+      ${Object.values(userMap).map(u => {
+        const playerCount = saState.allPlayers.filter(p=>p.user_id===u.userId).length;
+        return `<div class="sa-user-row">
+          <div style="width:34px;height:34px;border-radius:50%;background:#2d1f4a;display:flex;align-items:center;justify-content:center;font-family:'Barlow Condensed',sans-serif;font-size:14px;font-weight:900;color:#a78bfa;flex-shrink:0">${(u.email||'?').charAt(0).toUpperCase()}</div>
+          <div style="flex:1;min-width:0">
+            <div style="font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${u.email}</div>
+            <div style="font-size:11px;color:#6b7280">${u.clubs.slice(0,2).join(', ')||'No clubs'} · ${playerCount} players</div>
+          </div>
+          <div style="display:flex;gap:6px;flex-shrink:0">
+            ${u.userId ? `<button class="btn-purple" style="font-size:10px;padding:4px 8px" onclick="saImpersonateUser('${u.userId}','${u.email}')">Login As</button>` : '<span style="font-size:10px;color:#6b7280">Pending</span>'}
+          </div>
+        </div>`;
+      }).join('')}
+    </div>`;
+}
+
+async function saViewClub(clubId) {
+  saState.selectedClubId = clubId;
+  const club = saState.allClubs.find(c=>c.id===clubId);
+  if (!club) return;
+  const main = document.getElementById('sa-main');
+  main.innerHTML = '<div class="loading"><div class="spinner" style="border-top-color:#7c3aed"></div><span style="color:#a78bfa">Loading club...</span></div>';
+
+  const [playersRes, membersRes, seasonsRes, gamesRes, swimRes] = await Promise.all([
+    sb.from('players').select('*').eq('club_id', clubId).order('number'),
+    sb.from('club_members').select('*').eq('club_id', clubId),
+    sb.from('seasons').select('*'),
+    sb.from('games').select('*'),
+    sb.from('swim_times').select('id', {count:'exact',head:true}),
+  ]);
+
+  const players = playersRes.data || [];
+  const members = membersRes.data || [];
+  const playerIds = players.map(p=>p.id);
+  const clubSeasons = (seasonsRes.data||[]).filter(s=>playerIds.includes(s.player_id));
+  const seasonIds = clubSeasons.map(s=>s.id);
+  const clubGames = (gamesRes.data||[]).filter(g=>seasonIds.includes(g.season_id));
+
+  main.innerHTML = `
+    <button class="btn-purple" style="margin-bottom:14px" onclick="renderSuperAdmin()">← All Clubs</button>
+
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;flex-wrap:wrap">
+      <div style="width:48px;height:48px;border-radius:10px;background:${club.primary_color||'#7c3aed'};display:flex;align-items:center;justify-content:center;font-family:'Barlow Condensed',sans-serif;font-size:22px;font-weight:900;color:#fff;flex-shrink:0;overflow:hidden">
+        ${club.logo_url?`<img src="${club.logo_url}" style="width:100%;height:100%;object-fit:cover">`:club.name.charAt(0)}
+      </div>
+      <div style="flex:1;min-width:0">
+        <div style="font-family:'Barlow Condensed',sans-serif;font-size:22px;font-weight:900;color:#a78bfa">${club.name}</div>
+        <div style="font-size:11px;color:#6b7280">Created ${new Date(club.created_at).toLocaleDateString()}</div>
+      </div>
+      <button class="btn-purple" onclick="saImpersonateClub('${clubId}')">🚀 Enter as Admin</button>
+    </div>
+
+    <div class="sa-grid" style="margin-bottom:14px">
+      <div class="sa-stat"><div class="sa-stat-val">${members.length+1}</div><div class="sa-stat-label">Members</div></div>
+      <div class="sa-stat"><div class="sa-stat-val">${players.length}</div><div class="sa-stat-label">Players</div></div>
+      <div class="sa-stat"><div class="sa-stat-val">${clubSeasons.length}</div><div class="sa-stat-label">Seasons</div></div>
+      <div class="sa-stat"><div class="sa-stat-val">${clubGames.length}</div><div class="sa-stat-label">Games</div></div>
+    </div>
+
+    <!-- MEMBERS WITH LOGIN AS -->
+    <div class="sa-panel" style="margin-bottom:12px">
+      <div class="sa-panel-title">Members</div>
+      <div class="sa-user-row">
+        <div style="width:34px;height:34px;border-radius:50%;background:#7c3aed;display:flex;align-items:center;justify-content:center;font-family:'Barlow Condensed',sans-serif;font-size:14px;font-weight:900;color:#fff;flex-shrink:0">A</div>
+        <div style="flex:1;min-width:0"><div style="font-weight:700">Club Admin (Owner)</div><div style="font-size:11px;color:#6b7280">Created this club</div></div>
+        <div style="display:flex;gap:6px;flex-shrink:0">
+          <button class="btn-purple" style="font-size:10px;padding:4px 8px" onclick="saImpersonateClub('${clubId}')">Login As</button>
+          <span class="admin-badge">Admin</span>
+        </div>
+      </div>
+      ${members.map(m=>`
+        <div class="sa-user-row">
+          <div style="width:34px;height:34px;border-radius:50%;background:#2d1f4a;display:flex;align-items:center;justify-content:center;font-family:'Barlow Condensed',sans-serif;font-size:14px;font-weight:900;color:#a78bfa;flex-shrink:0">${(m.invited_email||'?').charAt(0).toUpperCase()}</div>
+          <div style="flex:1;min-width:0"><div style="font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${m.invited_email||'Unknown'}</div><div style="font-size:11px;color:#6b7280">${m.team_name||'No team'} · ${m.status}</div></div>
+          <div style="display:flex;gap:6px;flex-shrink:0">
+            ${m.user_id ? `<button class="btn-purple" style="font-size:10px;padding:4px 8px" onclick="saImpersonateUser('${m.user_id}','${m.invited_email||''}')">Login As</button>` : '<span style="font-size:10px;color:#6b7280">Not signed up</span>'}
+            <span class="${m.role==='admin'?'admin-badge':'coach-badge'}">${m.role}</span>
+          </div>
+        </div>`).join('')}
+    </div>
+
+    <!-- PLAYERS DRILLDOWN -->
+    <div class="sa-panel">
+      <div class="sa-panel-title">Players (${players.length})</div>
+      ${players.length===0
+        ? '<div style="text-align:center;padding:16px;color:#6b7280">No players yet</div>'
+        : players.map(p => {
+            const pSeasons = clubSeasons.filter(s=>s.player_id===p.id);
+            const pGames = clubGames.filter(g=>pSeasons.map(s=>s.id).includes(g.season_id));
+            return `<div class="sa-user-row" style="cursor:pointer" onclick="saViewPlayer('${p.id}','${clubId}')">
+              <div style="font-family:'Barlow Condensed',sans-serif;font-size:22px;font-weight:900;color:#7c3aed;width:28px;flex-shrink:0">#${p.number||'?'}</div>
+              <div style="flex:1;min-width:0"><div style="font-weight:700">${p.name}</div><div style="font-size:11px;color:#6b7280">${p.position}${p.team_name?' · '+p.team_name:''}</div></div>
+              <div style="text-align:right;flex-shrink:0">
+                <div style="font-size:12px;color:#a78bfa;font-weight:700">${pSeasons.length}S · ${pGames.length}G</div>
+                <div style="font-size:10px;color:#6b7280">tap to drill down</div>
+              </div>
+            </div>`;
+          }).join('')}
+    </div>`;
+}
+
+async function saViewPlayer(playerId, clubId) {
+  const main = document.getElementById('sa-main');
+  main.innerHTML = '<div class="loading"><div class="spinner" style="border-top-color:#7c3aed"></div><span style="color:#a78bfa">Loading player...</span></div>';
+
+  const [playerRes, seasonsRes, gamesRes, swimRes] = await Promise.all([
+    sb.from('players').select('*').eq('id', playerId).single(),
+    sb.from('seasons').select('*').eq('player_id', playerId).order('created_at'),
+    sb.from('games').select('*').order('date'),
+    sb.from('swim_times').select('*').eq('season_id', playerId),
+  ]);
+
+  const p = playerRes.data;
+  const seasons = seasonsRes.data || [];
+  const allGames = gamesRes.data || [];
+
+  // Build same nested structure as main app
+  const builtPlayer = {
+    id: p.id, name: p.name, number: p.number||'', position: p.position||'', teamName: p.team_name||'',
+    seasons: seasons.map(s => ({
+      id: s.id, label: s.label, type: s.type||'standard',
+      startDate: s.start_date||'', endDate: s.end_date||'', notes: s.notes||'',
+      games: allGames.filter(g=>g.season_id===s.id).map(g=>({id:g.id,date:g.date||'',opponent:g.opponent,stats:g.stats||emptyStats()})),
+      swimTimes: Object.fromEntries(SWIM_EVENTS.map(ev=>[ev,[]]))
+    }))
+  };
+
+  // Load swim times properly
+  const {data: swimData} = await sb.from('swim_times').select('*').in('season_id', seasons.map(s=>s.id));
+  builtPlayer.seasons.forEach(s => {
+    SWIM_EVENTS.forEach(ev => {
+      s.swimTimes[ev] = (swimData||[]).filter(t=>t.season_id===s.id&&t.event===ev).map(t=>({id:t.id,time:t.time,date:t.date||''}));
+    });
+  });
+
+  const {t, gp, shootPct, api, opi, dpi} = calcKPIs(builtPlayer.seasons.flatMap(s=>s.games));
+
+  main.innerHTML = `
+    <button class="btn-purple" style="margin-bottom:14px" onclick="saViewClub('${clubId}')">← Back to Club</button>
+
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px">
+      <span style="font-family:'Barlow Condensed',sans-serif;font-size:44px;font-weight:900;color:#7c3aed;line-height:1">#${p.number||'?'}</span>
+      <div>
+        <div style="font-family:'Barlow Condensed',sans-serif;font-size:22px;font-weight:900;color:#a78bfa">${p.name}</div>
+        <div style="font-size:11px;color:#6b7280">${p.position}${p.team_name?' · '+p.team_name:''}</div>
+      </div>
+      <button class="btn-purple" style="margin-left:auto" onclick="saImpersonateUser('${p.user_id}','')">Login As Owner</button>
+    </div>
+
+    <div class="sa-grid" style="margin-bottom:14px">
+      <div class="sa-stat"><div class="sa-stat-val">${builtPlayer.seasons.length}</div><div class="sa-stat-label">Seasons</div></div>
+      <div class="sa-stat"><div class="sa-stat-val">${gp}</div><div class="sa-stat-label">Games</div></div>
+      <div class="sa-stat"><div class="sa-stat-val">${t.goals}</div><div class="sa-stat-label">Goals</div></div>
+      <div class="sa-stat"><div class="sa-stat-val">${api}</div><div class="sa-stat-label">API</div></div>
+    </div>
+
+    ${builtPlayer.seasons.map(s => {
+      const k = calcKPIs(s.games);
+      return `<div class="sa-panel" style="margin-bottom:10px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;flex-wrap:wrap;gap:8px">
+          <div><span style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:16px;color:#a78bfa">${s.label}</span> ${typeBadge(s.type)}</div>
+          <span style="font-size:11px;color:#6b7280">${k.gp} games</span>
+        </div>
+        <div class="sa-grid">
+          <div class="sa-stat"><div class="sa-stat-val" style="font-size:20px">${k.t.goals}</div><div class="sa-stat-label">Goals</div></div>
+          <div class="sa-stat"><div class="sa-stat-val" style="font-size:20px">${k.t.assists}</div><div class="sa-stat-label">Assists</div></div>
+          <div class="sa-stat"><div class="sa-stat-val" style="font-size:20px">${k.shootPct==='—'?'—':k.shootPct+'%'}</div><div class="sa-stat-label">Shoot%</div></div>
+          <div class="sa-stat"><div class="sa-stat-val" style="font-size:20px">${k.api}</div><div class="sa-stat-label">API</div></div>
+        </div>
+        ${s.games.length > 0 ? `<div style="margin-top:10px">
+          ${s.games.map(g=>`<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid #2d1f4a;font-size:12px"><span>vs ${g.opponent}</span><span style="color:#6b7280">${g.date}</span><span style="color:#a78bfa;font-weight:700">${g.stats.goals||0}G ${g.stats.assists||0}A</span></div>`).join('')}
+        </div>` : ''}
+      </div>`;
+    }).join('')}`;
+}
+
+async function saViewUserById(userId) {
+  // Find clubs this user owns or is member of
+  const userClubs = saState.allClubs.filter(c=>c.created_by===userId);
+  const memberClubs = saState.allMembers.filter(m=>m.user_id===userId).map(m=>saState.allClubs.find(c=>c.id===m.club_id)).filter(Boolean);
+  const allUserClubs = [...userClubs, ...memberClubs.filter(c=>!userClubs.find(x=>x.id===c.id))];
+  if (allUserClubs.length > 0) {
+    await saImpersonateUser(userId, '');
+  }
+}
+
+async function saImpersonateClub(clubId) {
+  const club = saState.allClubs.find(c=>c.id===clubId);
+  if (!club) return;
+  saState.impersonating = { type: 'club', club, label: `Admin of ${club.name}` };
+  await _doImpersonate({...club, _role:'admin'});
+}
+
+async function saImpersonateUser(userId, email) {
+  // Find which clubs this user is in
+  const ownedClubs = saState.allClubs.filter(c=>c.created_by===userId).map(c=>({...c,_role:'admin'}));
+  const memberClubs = saState.allMembers.filter(m=>m.user_id===userId).map(m=>{
+    const club = saState.allClubs.find(c=>c.id===m.club_id);
+    return club ? {...club, _role: m.role} : null;
+  }).filter(Boolean);
+  const allClubs = [...ownedClubs, ...memberClubs.filter(c=>!ownedClubs.find(x=>x.id===c.id))];
+
+  if (allClubs.length === 0) {
+    // No clubs - show their unassigned players
+    saState.impersonating = { type: 'user', userId, label: email||userId };
+    const tempUser = {...state.user, id: userId};
+    // Load players for this user without club filter
+    const {data: players} = await sb.from('players').select('*').eq('user_id', userId).order('number');
+    if (!players || players.length === 0) {
+      alert('This user has no clubs or players yet.');
+      return;
+    }
+    // Use first player's data to enter
+    alert(`This user has ${players.length} players but no clubs. They need to create or join a club first.`);
+    return;
+  }
+
+  saState.impersonating = { type: 'user', userId, label: email||userId };
+  if (allClubs.length === 1) {
+    await _doImpersonate(allClubs[0]);
+  } else {
+    // Multiple clubs - show picker
+    const main = document.getElementById('sa-main');
+    main.innerHTML = `
+      <button class="btn-purple" style="margin-bottom:14px" onclick="renderSuperAdmin()">← Back</button>
+      <div style="font-family:'Barlow Condensed',sans-serif;font-size:18px;font-weight:900;color:#a78bfa;margin-bottom:16px">Choose club to enter as this user</div>
+      ${allClubs.map(c=>`
+        <div class="sa-club-row" onclick="_doImpersonate(${JSON.stringify(c).replace(/"/g,'&quot;')})">
+          <div style="width:40px;height:40px;border-radius:8px;background:${c.primary_color||'#7c3aed'};flex-shrink:0;display:flex;align-items:center;justify-content:center;font-family:'Barlow Condensed',sans-serif;font-size:18px;font-weight:900;color:#fff">${c.name.charAt(0)}</div>
+          <div style="flex:1;min-width:0"><div style="font-weight:700">${c.name}</div><div style="font-size:11px;color:#6b7280">${c._role}</div></div>
+          <span style="color:#a78bfa;font-size:18px">›</span>
+        </div>`).join('')}`;
+  }
+}
+
+async function _doImpersonate(club) {
+  // Override state to act as this user in this club
+  state.currentClub = club;
+  state.myRole = club._role || 'admin';
+  applyBranding(club);
+
+  // Show impersonate banner
+  const banner = document.getElementById('impersonate-banner');
+  const label = saState.impersonating ? saState.impersonating.label : club.name;
+  document.getElementById('impersonate-label-name').textContent = `${label} → ${club.name}`;
+  banner.classList.remove('hidden');
+
+  // Move banner into app topbar area
+  const topbar = document.getElementById('topbar');
+  topbar.parentNode.insertBefore(banner, topbar.nextSibling);
+
+  document.getElementById('superadmin-screen').classList.add('hidden');
+  document.getElementById('app').classList.remove('hidden');
+  document.getElementById('nav-admin').style.display = club._role==='admin'?'':'none';
+
+  // If impersonating a specific user, filter players to their user_id
+  if (saState.impersonating?.type === 'user' && saState.impersonating?.userId) {
+    // Temporarily override user id for data loading
+    const origId = state.user.id;
+    state.user = {...state.user, id: saState.impersonating.userId};
+    await loadAllData();
+    state.user = {...state.user, id: origId};
+  } else {
+    await loadAllData();
+  }
+  render();
+}
+
+function stopImpersonating() {
+  saState.impersonating = null;
+  document.getElementById('impersonate-banner').classList.add('hidden');
+  document.getElementById('app').classList.add('hidden');
+  document.getElementById('superadmin-screen').classList.remove('hidden');
+  const root = document.documentElement;
+  root.style.setProperty('--brand','#0284c7');
+  root.style.setProperty('--brand2','#10b981');
+  root.style.setProperty('--brandbg','#07111e');
+  renderSuperAdmin();
+}
+
+// ── FINAL AFTERLOGIN ──────────────────────────────────────────────────────────
 async function afterLogin(user) {
   state.user = user;
   await checkPendingInvites(user);
   document.getElementById('auth-screen').classList.add('hidden');
+  // Check if super admin
+  const isSA = await checkSuperAdmin(user);
+  if (isSA) {
+    await enterSuperAdmin();
+    return;
+  }
   await loadClubs();
   if (state.clubs.length===0) showClubScreen();
   else if (state.clubs.length===1) await selectClub(state.clubs[0]);

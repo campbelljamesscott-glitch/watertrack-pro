@@ -10,55 +10,47 @@
 <title>WaterTrack Pro</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700;900&family=Karla:wght@400;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
-/* ── RESET ── */
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 html{background:#07111e;overflow-x:hidden;height:100%}
-body{
-  font-family:'Karla',sans-serif;font-size:14px;line-height:1.5;
-  background:#07111e;color:#e0eaf4;
-  overflow-x:hidden;min-height:100%;
-  -webkit-text-size-adjust:100%;
-}
-:root{
-  --ink:#07111e;--deep:#0b1a2d;--panel:#0f2239;--raised:#162c44;
-  --line:#1e3a58;--wave:#0284c7;--foam:#38bdf8;--mint:#10b981;
-  --gold:#f59e0b;--rose:#f43f5e;--txt:#e0eaf4;--sub:#7ca0be;
-}
+body{font-family:'Karla',sans-serif;font-size:14px;line-height:1.5;background:#07111e;color:#e0eaf4;overflow-x:hidden;min-height:100%;-webkit-text-size-adjust:100%}
+:root{--ink:#07111e;--deep:#0b1a2d;--panel:#0f2239;--raised:#162c44;--line:#1e3a58;--wave:#0284c7;--foam:#38bdf8;--mint:#10b981;--gold:#f59e0b;--rose:#f43f5e;--txt:#e0eaf4;--sub:#7ca0be}
 input,select,button{font-family:'Karla',sans-serif;-webkit-appearance:none}
 button{cursor:pointer;border:none}
 
-/* ── LAYOUT ── */
-#app{display:flex;flex-direction:column;min-height:100vh;width:100%;overflow:hidden}
+/* LAYOUT */
+#app{display:flex;flex-direction:column;min-height:100vh;width:100%;overflow-x:hidden}
 
-/* ── TOPBAR ── */
-#topbar{
-  background:linear-gradient(90deg,var(--deep),#0a1f35);
-  border-bottom:2px solid var(--wave);
-  padding:12px 14px;
-  display:flex;align-items:center;gap:10px;
-  position:sticky;top:0;z-index:100;
-  width:100%;
-}
+/* AUTH SCREEN */
+#auth-screen{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;background:var(--ink)}
+.auth-box{background:var(--deep);border:1px solid var(--line);border-radius:20px;padding:28px 22px;width:100%;max-width:380px}
+.auth-logo{font-family:'Barlow Condensed',sans-serif;font-size:32px;font-weight:900;letter-spacing:3px;color:var(--foam);text-transform:uppercase;text-align:center;margin-bottom:4px}
+.auth-logo b{color:var(--mint)}
+.auth-sub{text-align:center;color:var(--sub);font-size:12px;letter-spacing:1px;text-transform:uppercase;margin-bottom:24px}
+.auth-tabs{display:flex;background:var(--raised);border-radius:8px;padding:3px;margin-bottom:20px}
+.auth-tab{flex:1;padding:8px;border-radius:6px;border:none;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--sub);background:transparent;cursor:pointer}
+.auth-tab.on{background:var(--wave);color:#fff}
+.auth-err{background:rgba(244,63,94,.1);border:1px solid var(--rose);border-radius:8px;padding:10px 12px;color:var(--rose);font-size:12px;margin-bottom:12px}
+.auth-ok{background:rgba(16,185,129,.1);border:1px solid var(--mint);border-radius:8px;padding:10px 12px;color:var(--mint);font-size:12px;margin-bottom:12px}
+
+/* TOPBAR */
+#topbar{background:linear-gradient(90deg,var(--deep),#0a1f35);border-bottom:2px solid var(--wave);padding:12px 14px;display:flex;align-items:center;gap:10px;position:sticky;top:0;z-index:100;width:100%}
 .logo{font-family:'Barlow Condensed',sans-serif;font-size:20px;font-weight:900;letter-spacing:2px;color:var(--foam);text-transform:uppercase;white-space:nowrap}
 .logo b{color:var(--mint)}
-.nav{display:flex;gap:4px;margin-left:auto}
-.nav-btn{
-  padding:6px 12px;border-radius:6px;font-size:11px;font-weight:700;
-  text-transform:uppercase;letter-spacing:.6px;
-  color:var(--sub);background:transparent;transition:all .15s;
-  border:none;cursor:pointer;white-space:nowrap;
-}
+.nav{display:flex;gap:4px;margin-left:auto;align-items:center}
+.nav-btn{padding:6px 12px;border-radius:6px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--sub);background:transparent;border:none;cursor:pointer;white-space:nowrap}
 .nav-btn.on{background:var(--wave);color:#fff}
+.nav-btn.signout{color:var(--rose);border:1px solid rgba(244,63,94,.3);padding:5px 10px}
 
-/* ── MAIN ── */
+/* MAIN */
 #main{flex:1;padding:14px;width:100%;overflow-x:hidden}
 
-/* ── PANELS ── */
+/* PANELS */
 .panel{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px;margin-bottom:12px;width:100%}
 .panel-title{font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:700;letter-spacing:2px;color:var(--foam);text-transform:uppercase;margin-bottom:12px}
 
-/* ── KPI GRID ── */
+/* KPI GRID */
 .kpi-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;width:100%}
 @media(min-width:400px){.kpi-grid{grid-template-columns:repeat(3,1fr)}}
 @media(min-width:600px){.kpi-grid{grid-template-columns:repeat(4,1fr)}}
@@ -67,14 +59,14 @@ button{cursor:pointer;border:none}
 .kpi-val{font-family:'Barlow Condensed',sans-serif;font-size:28px;font-weight:900;line-height:1;color:var(--kpi-color,var(--foam))}
 .kpi-label{font-size:9px;color:var(--sub);text-transform:uppercase;letter-spacing:1px;margin-top:3px}
 
-/* ── STAT GRID ── */
+/* STAT GRID */
 .stat-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:6px;width:100%}
 @media(min-width:400px){.stat-grid{grid-template-columns:repeat(3,1fr)}}
 .stat{background:var(--raised);border:1px solid var(--line);border-radius:8px;padding:8px 10px;display:flex;justify-content:space-between;align-items:center;min-width:0}
 .stat-label{font-size:10px;color:var(--sub);flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding-right:4px}
 .stat-val{font-family:'Barlow Condensed',sans-serif;font-size:20px;font-weight:700;color:var(--txt);flex-shrink:0}
 
-/* ── PLAYER ROW ── */
+/* PLAYER ROW */
 .p-list{display:flex;flex-direction:column;gap:6px;width:100%}
 .p-row{background:var(--raised);border:1px solid var(--line);border-radius:10px;padding:10px 12px;display:flex;align-items:center;gap:10px;width:100%;cursor:pointer;-webkit-tap-highlight-color:transparent}
 .p-row.sel{border-color:var(--wave);background:#0e2540}
@@ -85,7 +77,7 @@ button{cursor:pointer;border:none}
 .p-chips{display:flex;flex-direction:column;gap:3px;flex-shrink:0}
 .p-actions{display:flex;gap:4px;flex-shrink:0}
 
-/* ── CHIPS ── */
+/* CHIPS */
 .chip{display:inline-flex;align-items:center;padding:3px 8px;border-radius:20px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;border:1px solid transparent}
 .chip-blue{background:rgba(2,132,199,.15);color:var(--foam);border-color:rgba(2,132,199,.3)}
 .chip-green{background:rgba(16,185,129,.15);color:var(--mint);border-color:rgba(16,185,129,.3)}
@@ -93,24 +85,21 @@ button{cursor:pointer;border:none}
 .chip-gray{background:rgba(124,160,190,.1);color:var(--sub);border-color:rgba(124,160,190,.2)}
 .chip-red{background:rgba(244,63,94,.15);color:var(--rose);border-color:rgba(244,63,94,.3)}
 
-/* ── TYPE DOT ── */
+/* TYPE DOT */
 .tdot{display:inline-block;width:6px;height:6px;border-radius:50%;margin-right:4px}
-.tdot.junior{background:var(--sub)}
-.tdot.senior{background:var(--mint)}
-.tdot.professional{background:var(--gold)}
-.tdot.standard{background:var(--foam)}
+.tdot.junior{background:var(--sub)}.tdot.senior{background:var(--mint)}.tdot.professional{background:var(--gold)}.tdot.standard{background:var(--foam)}
 
-/* ── SEASON PILLS ── */
+/* SEASON PILLS */
 .s-pills{display:flex;flex-wrap:wrap;gap:6px}
 .s-pill{padding:5px 10px;border-radius:20px;font-size:10px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;cursor:pointer;border:1px solid var(--line);background:var(--raised);color:var(--sub);white-space:nowrap;-webkit-tap-highlight-color:transparent}
 .s-pill.on{background:var(--wave);border-color:var(--wave);color:#fff}
 
-/* ── TABS ── */
+/* TABS */
 .tab-bar{display:flex;gap:3px;background:var(--raised);padding:4px;border-radius:9px;width:100%;margin-bottom:14px}
 .tab-btn{flex:1;padding:8px 4px;border-radius:6px;border:none;font-family:'Karla',sans-serif;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--sub);background:transparent;cursor:pointer;white-space:nowrap;-webkit-tap-highlight-color:transparent}
 .tab-btn.on{background:var(--wave);color:#fff}
 
-/* ── BUTTONS ── */
+/* BUTTONS */
 .btn{padding:8px 14px;border-radius:7px;border:none;font-family:'Karla',sans-serif;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.7px;cursor:pointer;white-space:nowrap;-webkit-tap-highlight-color:transparent}
 .btn-blue{background:var(--wave);color:#fff}
 .btn-green{background:var(--mint);color:#07111e}
@@ -119,7 +108,7 @@ button{cursor:pointer;border:none}
 .btn-sm{padding:5px 11px;font-size:11px}
 .btn-xs{padding:3px 8px;font-size:10px}
 
-/* ── FORMS ── */
+/* FORMS */
 .f-group{display:flex;flex-direction:column;gap:5px;width:100%}
 .f-label{font-size:10px;color:var(--sub);text-transform:uppercase;letter-spacing:1px}
 .f-input{background:var(--raised);border:1px solid var(--line);color:var(--txt);border-radius:7px;padding:10px 12px;font-family:'Karla',sans-serif;font-size:16px;width:100%;-webkit-appearance:none}
@@ -128,34 +117,19 @@ button{cursor:pointer;border:none}
 @media(min-width:400px){.f-grid{grid-template-columns:repeat(2,1fr)}}
 .f-grid-2{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;width:100%}
 
-/* ── MODAL ── */
+/* MODAL */
 .overlay{position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:999;display:flex;align-items:flex-end;justify-content:center}
 .modal{background:var(--deep);border:1px solid var(--line);border-radius:20px 20px 0 0;padding:20px 16px 40px;width:100%;max-height:88vh;overflow-y:auto;-webkit-overflow-scrolling:touch;animation:slideUp .22s ease}
 .modal-title{font-family:'Barlow Condensed',sans-serif;font-size:20px;font-weight:900;letter-spacing:2px;color:var(--foam);text-transform:uppercase;margin-bottom:16px}
 @keyframes slideUp{from{transform:translateY(60px);opacity:0}to{transform:translateY(0);opacity:1}}
 
-/* ── CAREER BANNER ── */
+/* MISC */
 .career-banner{background:linear-gradient(135deg,#0a1e33,#071629,#0b2240);border:1px solid var(--wave);border-radius:14px;padding:14px;margin-bottom:14px;width:100%}
-
-/* ── GAME ENTRY ── */
 .g-entry{background:var(--raised);border:1px solid var(--line);border-radius:10px;padding:12px;margin-bottom:8px;width:100%}
 .g-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;gap:8px;flex-wrap:wrap}
-
-/* ── SEASON HEADER ── */
 .s-header{background:linear-gradient(135deg,var(--raised),#102237);border:1px solid var(--line);border-radius:12px;padding:12px;margin-bottom:14px;width:100%}
 .s-header-top{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;flex-wrap:wrap;margin-bottom:8px}
 .s-actions{display:flex;gap:6px;flex-wrap:wrap;flex-shrink:0}
-
-/* ── TABLE ── */
-.tbl-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;width:100%}
-table{border-collapse:collapse;min-width:100%}
-th{font-size:10px;color:var(--sub);text-transform:uppercase;letter-spacing:1px;padding:7px 8px;text-align:left;border-bottom:1px solid var(--line);white-space:nowrap}
-td{padding:8px 8px;font-size:13px;border-bottom:1px solid rgba(30,58,88,.4)}
-tr:last-child td{border-bottom:none}
-.hi{color:var(--mint);font-weight:700}
-.gold{color:var(--gold);font-weight:700}
-
-/* ── MISC ── */
 .div{height:1px;background:var(--line);margin:14px 0}
 .empty{text-align:center;padding:32px 16px;color:var(--sub)}
 .empty-icon{font-size:40px;margin-bottom:10px}
@@ -167,37 +141,68 @@ tr:last-child td{border-bottom:none}
 .row{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
 .row-between{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap}
 .col{display:flex;flex-direction:column;gap:6px}
-.mb2{margin-bottom:8px}
-.mb3{margin-bottom:12px}
-.mb4{margin-bottom:16px}
-.text-xs{font-size:11px}
-.text-sub{color:var(--sub)}
-.text-bold{font-weight:700}
-.text-foam{color:var(--foam)}
+.mb2{margin-bottom:8px}.mb3{margin-bottom:12px}.mb4{margin-bottom:16px}
+.text-xs{font-size:11px}.text-sub{color:var(--sub)}.text-bold{font-weight:700}
 .bc-title{font-family:'Barlow Condensed',sans-serif;font-size:22px;font-weight:900;letter-spacing:2px;color:var(--foam)}
-.hidden{display:none}
+.hidden{display:none!important}
+.loading{text-align:center;padding:40px 20px;color:var(--sub)}
+.spinner{display:inline-block;width:22px;height:22px;border:2px solid var(--line);border-top-color:var(--wave);border-radius:50%;animation:spin .7s linear infinite;margin-bottom:10px}
+@keyframes spin{to{transform:rotate(360deg)}}
 </style>
 </head>
 <body>
-<div id="app">
+
+<!-- AUTH SCREEN -->
+<div id="auth-screen">
+  <div class="auth-box">
+    <div class="auth-logo">Water<b>Track</b></div>
+    <div class="auth-sub">Pro Performance Tracker</div>
+    <div class="auth-tabs">
+      <button class="auth-tab on" id="tab-login" onclick="switchAuthTab('login')">Sign In</button>
+      <button class="auth-tab" id="tab-signup" onclick="switchAuthTab('signup')">Sign Up</button>
+    </div>
+    <div id="auth-msg"></div>
+    <div class="col" style="gap:12px">
+      <div class="f-group">
+        <label class="f-label">Email</label>
+        <input class="f-input" type="email" id="auth-email" placeholder="your@email.com">
+      </div>
+      <div class="f-group">
+        <label class="f-label">Password</label>
+        <input class="f-input" type="password" id="auth-password" placeholder="••••••••">
+      </div>
+      <button class="btn btn-blue w-full" id="auth-btn" onclick="handleAuth()" style="width:100%;margin-top:4px">Sign In</button>
+    </div>
+  </div>
+</div>
+
+<!-- MAIN APP -->
+<div id="app" class="hidden">
   <header id="topbar">
     <div class="logo">Water<b>Track</b></div>
     <nav class="nav" id="main-nav">
       <button class="nav-btn" id="nav-dashboard" onclick="showPage('dashboard')">Dashboard</button>
       <button class="nav-btn on" id="nav-roster" onclick="showPage('roster')">Roster</button>
+      <button class="nav-btn signout" onclick="signOut()">Sign Out</button>
     </nav>
   </header>
-  <main id="main"></main>
+  <main id="main"><div class="loading"><div class="spinner"></div><br>Loading...</div></main>
 </div>
 
-<!-- MODALS -->
+<!-- MODAL -->
 <div class="overlay hidden" id="overlay" onclick="closeModal(event)">
   <div class="modal" id="modal-content" onclick="event.stopPropagation()"></div>
 </div>
 
 <script>
-// ── DATA ──────────────────────────────────────────────────────────────────────
-const STORE_KEY = 'wpt_v5';
+// ── SUPABASE ──────────────────────────────────────────────────────────────────
+const { createClient } = supabase;
+const sb = createClient(
+  'https://aadjopjumraksjgfjfon.supabase.co',
+  'sb_publishable_aSrs8uhYDi4Y-oiH66UaJA_9IZ2tIiu'
+);
+
+// ── CONSTANTS ─────────────────────────────────────────────────────────────────
 const POSITIONS = ['Goalkeeper','Center','Driver','Wing','Utility','Point'];
 const SWIM_EVENTS = ['50 Free','100 Free','50 Breast','50 Back'];
 const STAT_FIELDS = [
@@ -217,28 +222,177 @@ const STAT_FIELDS = [
   {key:'personalFouls',label:'Personal Fouls',cat:'general'},
   {key:'turnovers',label:'Turnovers',cat:'general'},
 ];
-
-const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2,6);
 const emptyStats = () => Object.fromEntries(STAT_FIELDS.map(f=>[f.key,0]));
 
 // ── STATE ─────────────────────────────────────────────────────────────────────
 let state = {
+  user: null,
   players: [],
-  page: 'roster',          // 'roster' | 'dashboard' | 'player'
+  page: 'roster',
   selectedPlayerId: null,
-  selectedSeasonId: null,  // null = career view
+  selectedSeasonId: null,
   careerSelected: new Set(),
 };
 
-// ── STORAGE ───────────────────────────────────────────────────────────────────
-function save() {
-  try { localStorage.setItem(STORE_KEY, JSON.stringify({players: state.players})); } catch(e){}
+// ── AUTH ──────────────────────────────────────────────────────────────────────
+let authMode = 'login';
+
+function switchAuthTab(mode) {
+  authMode = mode;
+  document.getElementById('tab-login').classList.toggle('on', mode==='login');
+  document.getElementById('tab-signup').classList.toggle('on', mode==='signup');
+  document.getElementById('auth-btn').textContent = mode==='login' ? 'Sign In' : 'Create Account';
+  document.getElementById('auth-msg').innerHTML = '';
 }
-function load() {
-  try {
-    const d = localStorage.getItem(STORE_KEY);
-    if (d) { const p = JSON.parse(d); state.players = p.players || []; }
-  } catch(e){}
+
+async function handleAuth() {
+  const email = document.getElementById('auth-email').value.trim();
+  const password = document.getElementById('auth-password').value;
+  const msg = document.getElementById('auth-msg');
+  if (!email || !password) { msg.innerHTML = '<div class="auth-err">Please enter email and password.</div>'; return; }
+  msg.innerHTML = '<div class="loading"><div class="spinner"></div></div>';
+
+  let result;
+  if (authMode === 'login') {
+    result = await sb.auth.signInWithPassword({email, password});
+  } else {
+    result = await sb.auth.signUp({email, password});
+  }
+
+  if (result.error) {
+    msg.innerHTML = `<div class="auth-err">${result.error.message}</div>`;
+  } else if (authMode === 'signup' && !result.data.session) {
+    msg.innerHTML = `<div class="auth-ok">Check your email to confirm your account, then sign in!</div>`;
+  } else {
+    startApp(result.data.user);
+  }
+}
+
+async function signOut() {
+  await sb.auth.signOut();
+  state = {user:null,players:[],page:'roster',selectedPlayerId:null,selectedSeasonId:null,careerSelected:new Set()};
+  document.getElementById('app').classList.add('hidden');
+  document.getElementById('auth-screen').classList.remove('hidden');
+}
+
+// ── INIT ──────────────────────────────────────────────────────────────────────
+sb.auth.onAuthStateChange((event, session) => {
+  if (session?.user && !state.user) {
+    startApp(session.user);
+  }
+});
+
+async function startApp(user) {
+  state.user = user;
+  document.getElementById('auth-screen').classList.add('hidden');
+  document.getElementById('app').classList.remove('hidden');
+  await loadAllData();
+  render();
+}
+
+// ── DATABASE ──────────────────────────────────────────────────────────────────
+async function loadAllData() {
+  // Load players
+  const {data: players} = await sb.from('players').select('*').order('number');
+  if (!players) return;
+
+  // Load all seasons, games, swim_times in parallel
+  const [seasonsRes, gamesRes, swimRes] = await Promise.all([
+    sb.from('seasons').select('*').order('created_at'),
+    sb.from('games').select('*').order('date'),
+    sb.from('swim_times').select('*').order('date'),
+  ]);
+
+  const seasons = seasonsRes.data || [];
+  const games = gamesRes.data || [];
+  const swimTimes = swimRes.data || [];
+
+  // Build nested structure
+  state.players = players.map(p => ({
+    id: p.id,
+    name: p.name,
+    number: p.number || '',
+    position: p.position || '',
+    seasons: seasons
+      .filter(s => s.player_id === p.id)
+      .map(s => ({
+        id: s.id,
+        label: s.label,
+        type: s.type || 'standard',
+        startDate: s.start_date || '',
+        endDate: s.end_date || '',
+        notes: s.notes || '',
+        games: games.filter(g => g.season_id === s.id).map(g => ({
+          id: g.id,
+          date: g.date || '',
+          opponent: g.opponent,
+          stats: g.stats || emptyStats(),
+        })),
+        swimTimes: Object.fromEntries(SWIM_EVENTS.map(ev => [
+          ev,
+          swimTimes.filter(t => t.season_id === s.id && t.event === ev).map(t => ({
+            id: t.id, time: t.time, date: t.date || '',
+          }))
+        ])),
+      }))
+  }));
+}
+
+async function dbAddPlayer(name, number, position) {
+  const {data, error} = await sb.from('players').insert({
+    name, number, position, user_id: state.user.id
+  }).select().single();
+  if (error) { alert('Error: ' + error.message); return null; }
+  return {id:data.id, name:data.name, number:data.number||'', position:data.position||'', seasons:[]};
+}
+
+async function dbUpdatePlayer(id, name, number, position) {
+  await sb.from('players').update({name, number, position}).eq('id', id);
+}
+
+async function dbDeletePlayer(id) {
+  await sb.from('players').delete().eq('id', id);
+}
+
+async function dbAddSeason(playerId, label, type, startDate, endDate, notes) {
+  const {data, error} = await sb.from('seasons').insert({
+    player_id: playerId, label, type,
+    start_date: startDate, end_date: endDate, notes
+  }).select().single();
+  if (error) { alert('Error: ' + error.message); return null; }
+  return {
+    id: data.id, label: data.label, type: data.type,
+    startDate: data.start_date||'', endDate: data.end_date||'', notes: data.notes||'',
+    games: [], swimTimes: Object.fromEntries(SWIM_EVENTS.map(e=>[e,[]]))
+  };
+}
+
+async function dbDeleteSeason(id) {
+  await sb.from('seasons').delete().eq('id', id);
+}
+
+async function dbAddGame(seasonId, date, opponent, stats) {
+  const {data, error} = await sb.from('games').insert({
+    season_id: seasonId, date, opponent, stats
+  }).select().single();
+  if (error) { alert('Error: ' + error.message); return null; }
+  return {id: data.id, date: data.date||'', opponent: data.opponent, stats: data.stats};
+}
+
+async function dbDeleteGame(id) {
+  await sb.from('games').delete().eq('id', id);
+}
+
+async function dbAddSwimTime(seasonId, event, time, date) {
+  const {data, error} = await sb.from('swim_times').insert({
+    season_id: seasonId, event, time, date
+  }).select().single();
+  if (error) { alert('Error: ' + error.message); return null; }
+  return {id: data.id, time: data.time, date: data.date||''};
+}
+
+async function dbDeleteSwimTime(id) {
+  await sb.from('swim_times').delete().eq('id', id);
 }
 
 // ── KPI ───────────────────────────────────────────────────────────────────────
@@ -263,20 +417,16 @@ function bestTime(entries) {
 }
 
 // ── RENDER HELPERS ────────────────────────────────────────────────────────────
-function kpiCard(label, val, color='var(--foam)') {
-  return `<div class="kpi" style="--kpi-color:${color}"><div class="kpi-val">${val}</div><div class="kpi-label">${label}</div></div>`;
-}
-function statCard(label, val) {
-  return `<div class="stat"><span class="stat-label">${label}</span><span class="stat-val">${val}</span></div>`;
-}
+const kpiCard = (label, val, color='var(--foam)') =>
+  `<div class="kpi" style="--kpi-color:${color}"><div class="kpi-val">${val}</div><div class="kpi-label">${label}</div></div>`;
+const statCard = (label, val) =>
+  `<div class="stat"><span class="stat-label">${label}</span><span class="stat-val">${val}</span></div>`;
 function typeBadge(type) {
   const map = {junior:['chip-gray','JR'],senior:['chip-green','SR'],professional:['chip-gold','PRO'],standard:['chip-blue','STD']};
   const [cls,lbl] = map[type]||map.standard;
   return `<span class="chip ${cls}">${lbl}</span>`;
 }
-function typeDot(type) {
-  return `<span class="tdot ${type}"></span>`;
-}
+const typeDot = type => `<span class="tdot ${type}"></span>`;
 
 // ── PAGES ─────────────────────────────────────────────────────────────────────
 function showPage(page) {
@@ -299,32 +449,23 @@ function render() {
   }
 }
 
-// ── ROSTER PAGE ───────────────────────────────────────────────────────────────
+// ── ROSTER ────────────────────────────────────────────────────────────────────
 function renderRoster() {
   const sorted = [...state.players].sort((a,b)=>(parseInt(a.number)||99)-(parseInt(b.number)||99));
-  let rows = sorted.length === 0
+  const rows = sorted.length === 0
     ? `<div class="panel"><div class="empty"><div class="empty-icon">👤</div><p>No players yet.<br>Add your first player.</p></div></div>`
     : sorted.map(p => {
-        const games = p.seasons.flatMap(s=>s.games);
-        const {gp} = calcKPIs(games);
-        return `
-        <div class="p-row" onclick="openPlayer('${p.id}')">
+        const {gp} = calcKPIs(p.seasons.flatMap(s=>s.games));
+        return `<div class="p-row" onclick="openPlayer('${p.id}')">
           <div class="p-num">#${p.number||'?'}</div>
-          <div class="p-info">
-            <div class="p-name">${p.name}</div>
-            <div class="p-pos">${p.position}</div>
-          </div>
-          <div class="p-chips">
-            <span class="chip chip-blue">${p.seasons.length}S</span>
-            <span class="chip chip-gray">${gp}G</span>
-          </div>
+          <div class="p-info"><div class="p-name">${p.name}</div><div class="p-pos">${p.position}</div></div>
+          <div class="p-chips"><span class="chip chip-blue">${p.seasons.length}S</span><span class="chip chip-gray">${gp}G</span></div>
           <div class="p-actions" onclick="event.stopPropagation()">
             <button class="btn btn-ghost btn-xs" onclick="modalEditPlayer('${p.id}')">✏️</button>
             <button class="btn btn-red btn-xs" onclick="deletePlayer('${p.id}')">✕</button>
           </div>
         </div>`;
       }).join('');
-
   return `
     <div class="row-between mb3">
       <span style="font-family:'Barlow Condensed',sans-serif;font-size:15px;font-weight:700;letter-spacing:2px;color:var(--foam);text-transform:uppercase">Roster (${state.players.length})</span>
@@ -333,19 +474,12 @@ function renderRoster() {
     <div class="p-list">${rows}</div>`;
 }
 
-// ── DASHBOARD PAGE ────────────────────────────────────────────────────────────
+// ── DASHBOARD ─────────────────────────────────────────────────────────────────
 function renderDashboard() {
   const allGames = state.players.flatMap(p=>p.seasons.flatMap(s=>s.games));
   const {t,gp,shootPct,api} = calcKPIs(allGames);
-
-  const topScorers = [...state.players]
-    .map(p=>({p, k:calcKPIs(p.seasons.flatMap(s=>s.games))}))
-    .sort((a,b)=>b.k.t.goals-a.k.t.goals).slice(0,5);
-
-  const topAPI = [...state.players]
-    .map(p=>({p, k:calcKPIs(p.seasons.flatMap(s=>s.games))}))
-    .filter(x=>x.k.gp>0)
-    .sort((a,b)=>parseFloat(b.k.api)-parseFloat(a.k.api)).slice(0,5);
+  const topScorers = [...state.players].map(p=>({p,k:calcKPIs(p.seasons.flatMap(s=>s.games))})).sort((a,b)=>b.k.t.goals-a.k.t.goals).slice(0,5);
+  const topAPI = [...state.players].map(p=>({p,k:calcKPIs(p.seasons.flatMap(s=>s.games))})).filter(x=>x.k.gp>0).sort((a,b)=>parseFloat(b.k.api)-parseFloat(a.k.api)).slice(0,5);
 
   return `
     <div class="career-banner mb4">
@@ -361,7 +495,6 @@ function renderDashboard() {
         ${kpiCard('Avg API',api,'var(--wave)')}
       </div>
     </div>
-
     ${state.players.length === 0 ? `<div class="empty"><div class="empty-icon">🤽</div><p>Add players to see team stats.</p></div>` : `
     <div class="panel mb3">
       <div class="panel-title">Top Goal Scorers</div>
@@ -369,10 +502,7 @@ function renderDashboard() {
         <div class="row-between mb2" style="padding-bottom:8px;border-bottom:1px solid var(--line)">
           <div class="row" style="gap:10px;min-width:0;flex:1">
             <span style="font-family:'Barlow Condensed',sans-serif;font-size:20px;color:${i===0?'var(--gold)':'var(--sub)'};width:22px">${i+1}</span>
-            <div style="min-width:0">
-              <div class="text-bold" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${p.name}</div>
-              <div class="text-xs text-sub">${p.position} · ${k.gp} GP</div>
-            </div>
+            <div style="min-width:0"><div class="text-bold" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${p.name}</div><div class="text-xs text-sub">${p.position} · ${k.gp} GP</div></div>
           </div>
           <div style="text-align:right;flex-shrink:0">
             <div style="font-family:'Barlow Condensed',sans-serif;font-size:22px;color:var(--mint)">${k.t.goals}</div>
@@ -386,10 +516,7 @@ function renderDashboard() {
         <div class="row-between mb2" style="padding-bottom:8px;border-bottom:1px solid var(--line)">
           <div class="row" style="gap:10px;min-width:0;flex:1">
             <span style="font-family:'Barlow Condensed',sans-serif;font-size:20px;color:${i===0?'var(--gold)':'var(--sub)'};width:22px">${i+1}</span>
-            <div style="min-width:0">
-              <div class="text-bold" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${p.name}</div>
-              <div class="text-xs text-sub">${p.position} · ${k.gp} GP</div>
-            </div>
+            <div style="min-width:0"><div class="text-bold" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${p.name}</div><div class="text-xs text-sub">${p.position} · ${k.gp} GP</div></div>
           </div>
           <div style="text-align:right;flex-shrink:0">
             <div style="font-family:'Barlow Condensed',sans-serif;font-size:22px;color:var(--gold)">${k.api}</div>
@@ -412,24 +539,18 @@ function openPlayer(id) {
 function renderPlayerDetail() {
   const p = state.players.find(x=>x.id===state.selectedPlayerId);
   if (!p) return '';
-
   const seasonNav = `
     <div class="panel mb3">
       <div class="panel-title" style="margin-bottom:10px">Seasons</div>
       <div class="s-pills">
         <button class="s-pill ${state.selectedSeasonId===null?'on':''}" onclick="selectSeason(null)">🏆 Career</button>
-        ${p.seasons.map(s=>`
-          <button class="s-pill ${state.selectedSeasonId===s.id?'on':''}" onclick="selectSeason('${s.id}')">
-            ${typeDot(s.type)}${s.label}
-          </button>`).join('')}
+        ${p.seasons.map(s=>`<button class="s-pill ${state.selectedSeasonId===s.id?'on':''}" onclick="selectSeason('${s.id}')">${typeDot(s.type)}${s.label}</button>`).join('')}
         <button class="btn btn-blue btn-sm" onclick="modalAddSeason()">+ Season</button>
       </div>
     </div>`;
-
   const content = state.selectedSeasonId === null
     ? renderCareerView(p)
     : renderSeasonView(p, p.seasons.find(s=>s.id===state.selectedSeasonId));
-
   return `
     <div class="row-between mb3" style="flex-wrap:nowrap">
       <button class="btn btn-ghost btn-sm" onclick="showPage('roster')">← Roster</button>
@@ -441,25 +562,18 @@ function renderPlayerDetail() {
         </div>
       </div>
     </div>
-    ${seasonNav}
-    ${content}`;
+    ${seasonNav}${content}`;
 }
 
-function selectSeason(id) {
-  state.selectedSeasonId = id;
-  render();
-}
+function selectSeason(id) { state.selectedSeasonId = id; render(); }
 
 // ── SEASON VIEW ───────────────────────────────────────────────────────────────
 function renderSeasonView(p, season) {
   if (!season) return '';
   const {t,gp,shootPct,savePct,api,opi,dpi} = calcKPIs(season.games);
-
-  const tabs = ['overview','stats','swim','games'];
   const activeTab = window._seasonTab || 'overview';
-
   const tabBar = `<div class="tab-bar">
-    ${tabs.map(tab=>`<button class="tab-btn ${activeTab===tab?'on':''}" onclick="setSeasonTab('${tab}')">${tab.charAt(0).toUpperCase()+tab.slice(1)}</button>`).join('')}
+    ${['overview','stats','swim','games'].map(tab=>`<button class="tab-btn ${activeTab===tab?'on':''}" onclick="setSeasonTab('${tab}')">${tab.charAt(0).toUpperCase()+tab.slice(1)}</button>`).join('')}
   </div>`;
 
   let content = '';
@@ -476,26 +590,27 @@ function renderSeasonView(p, season) {
   } else if (activeTab==='stats') {
     content = `<div class="panel"><div class="panel-title">All Stats</div><div class="stat-grid">
       ${STAT_FIELDS.map(f=>statCard(f.label,t[f.key])).join('')}
-      ${statCard('Shooting %',shootPct==='—'?'—':shootPct+'%')}
-      ${statCard('Save %',savePct==='—'?'—':savePct+'%')}
-      ${statCard('API',api)} ${statCard('OPI',opi)} ${statCard('DPI',dpi)}
+      ${statCard('Shoot%',shootPct==='—'?'—':shootPct+'%')}
+      ${statCard('Save%',savePct==='—'?'—':savePct+'%')}
+      ${statCard('API',api)}${statCard('OPI',opi)}${statCard('DPI',dpi)}
     </div></div>`;
   } else if (activeTab==='swim') {
     content = `<div class="panel"><div class="panel-title">Swim Times</div>
-      <div class="tbl-wrap"><table>
-        <thead><tr><th>Event</th><th>Best</th><th>#</th><th>History</th></tr></thead>
-        <tbody>${SWIM_EVENTS.map(ev=>{
-          const entries = season.swimTimes[ev]||[];
-          const best = bestTime(entries);
-          const sorted = [...entries].sort((a,b)=>new Date(b.date)-new Date(a.date));
-          return `<tr>
-            <td style="font-weight:700">${ev}</td>
-            <td>${best?`<span class="swim-best">${best.toFixed(2)}s</span>`:'—'}</td>
-            <td>${entries.length}</td>
-            <td>${sorted.map(e=>`<span class="chip ${e.time===best?'chip-green':'chip-gray'}" style="margin:2px;cursor:pointer" onclick="deleteSwimTime('${season.id}','${ev}','${e.id}')" title="${e.date}">${e.time.toFixed(2)}s</span>`).join('')||'—'}</td>
-          </tr>`;
-        }).join('')}</tbody>
-      </table></div>
+      ${SWIM_EVENTS.map(ev=>{
+        const entries = season.swimTimes[ev]||[];
+        const best = bestTime(entries);
+        return `<div style="background:var(--raised);border:1px solid var(--line);border-radius:10px;padding:12px;margin-bottom:8px">
+          <div class="row-between mb2">
+            <span style="font-weight:700">${ev}</span>
+            <span class="swim-best">${best?best.toFixed(2)+'s':'—'}</span>
+          </div>
+          <div style="display:flex;flex-wrap:wrap;gap:6px">
+            ${[...entries].sort((a,b)=>a.time-b.time).map(e=>`
+              <span class="chip ${e.time===best?'chip-green':'chip-gray'}" style="cursor:pointer" onclick="deleteSwimTime('${season.id}','${ev}','${e.id}')">${e.time.toFixed(2)}s ✕</span>
+            `).join('')||'<span class="text-xs text-sub">No times yet</span>'}
+          </div>
+        </div>`;
+      }).join('')}
     </div>`;
   } else if (activeTab==='games') {
     content = season.games.length===0
@@ -507,10 +622,7 @@ function renderSeasonView(p, season) {
               <div><span style="font-weight:700;font-size:15px">vs ${g.opponent}</span><br><span class="text-xs text-sub">${g.date}</span></div>
               <button class="btn btn-red btn-xs" onclick="deleteGame('${season.id}','${g.id}')">Remove</button>
             </div>
-            <div class="stat-grid">
-              ${STAT_FIELDS.slice(0,10).map(f=>statCard(f.label,g.stats[f.key])).join('')}
-              ${statCard('Shoot%',gk.shootPct==='—'?'—':gk.shootPct+'%')}
-            </div>
+            <div class="stat-grid">${STAT_FIELDS.slice(0,10).map(f=>statCard(f.label,g.stats[f.key]||0)).join('')}${statCard('Shoot%',gk.shootPct==='—'?'—':gk.shootPct+'%')}</div>
           </div>`;
         }).join('');
   }
@@ -530,15 +642,11 @@ function renderSeasonView(p, season) {
       </div>
     </div>
     <div class="kpi-grid mb3">
-      ${kpiCard('Games',gp,'var(--wave)')}
-      ${kpiCard('Goals',t.goals,'var(--mint)')}
+      ${kpiCard('Games',gp,'var(--wave)')}${kpiCard('Goals',t.goals,'var(--mint)')}
       ${kpiCard('Shoot%',shootPct==='—'?'—':shootPct+'%','var(--mint)')}
-      ${kpiCard('Assists',t.assists,'var(--foam)')}
-      ${kpiCard('Steals',t.steals,'var(--gold)')}
-      ${kpiCard('Blocks',t.blocks,'var(--foam)')}
-      ${kpiCard('API',api,'var(--gold)')}
-      ${kpiCard('OPI',opi,'var(--wave)')}
-      ${kpiCard('DPI',dpi,'var(--mint)')}
+      ${kpiCard('Assists',t.assists,'var(--foam)')}${kpiCard('Steals',t.steals,'var(--gold)')}
+      ${kpiCard('Blocks',t.blocks,'var(--foam)')}${kpiCard('API',api,'var(--gold)')}
+      ${kpiCard('OPI',opi,'var(--wave)')}${kpiCard('DPI',dpi,'var(--mint)')}
     </div>
     ${tabBar}${content}`;
 }
@@ -548,110 +656,61 @@ function setSeasonTab(tab) { window._seasonTab = tab; render(); }
 // ── CAREER VIEW ───────────────────────────────────────────────────────────────
 function renderCareerView(p) {
   if (p.seasons.length===0) return `<div class="empty"><div class="empty-icon">📅</div><p>No seasons yet. Add one above!</p></div>`;
-
   const active = p.seasons.filter(s=>state.careerSelected.has(s.id));
   const allGames = active.flatMap(s=>s.games);
   const {t,gp,shootPct,savePct,api,opi,dpi} = calcKPIs(allGames);
-
-  const swimBests = {};
-  SWIM_EVENTS.forEach(ev=>{
-    const all = active.flatMap(s=>s.swimTimes[ev]||[]);
-    swimBests[ev] = bestTime(all);
-  });
-
-  const toggleBtns = p.seasons.map(s=>`
-    <button class="s-pill ${state.careerSelected.has(s.id)?'on':''}" onclick="toggleCareerSeason('${s.id}')">
-      ${typeDot(s.type)}${s.label} (${s.games.length}G)
-    </button>`).join('');
-
-  const breakdown = active.map(s=>{
-    const k = calcKPIs(s.games);
-    return `<div style="background:var(--raised);border:1px solid var(--line);border-radius:10px;padding:12px;margin-bottom:8px">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;flex-wrap:wrap;gap:6px">
-        <div>
-          <span style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:15px">${s.label}</span>
-          <span style="margin-left:6px">${typeBadge(s.type)}</span>
-        </div>
-        <span class="chip chip-gray">${k.gp} games</span>
-      </div>
-      <div class="stat-grid">
-        <div class="stat"><span class="stat-label">Goals</span><span class="stat-val" style="color:var(--mint)">${k.t.goals}</span></div>
-        <div class="stat"><span class="stat-label">Assists</span><span class="stat-val">${k.t.assists}</span></div>
-        <div class="stat"><span class="stat-label">Shoot%</span><span class="stat-val">${k.shootPct==='—'?'—':k.shootPct+'%'}</span></div>
-        <div class="stat"><span class="stat-label">Steals</span><span class="stat-val">${k.t.steals}</span></div>
-        <div class="stat"><span class="stat-label">Blocks</span><span class="stat-val">${k.t.blocks}</span></div>
-        <div class="stat"><span class="stat-label">API</span><span class="stat-val" style="color:var(--gold)">${k.api}</span></div>
-      </div>
-    </div>`;
-  }).join('');
+  const swimBests = Object.fromEntries(SWIM_EVENTS.map(ev=>[ev, bestTime(active.flatMap(s=>s.swimTimes[ev]||[]))]));
 
   return `
     <div class="career-banner mb3">
       <div class="row-between mb3">
-        <div>
-          <div class="bc-title">Career Stats</div>
-          <div class="text-xs text-sub">${active.length}/${p.seasons.length} seasons · ${allGames.length} games</div>
-        </div>
-        <button class="btn btn-ghost btn-sm" onclick="toggleAllSeasons()">
-          ${state.careerSelected.size===p.seasons.length?'Deselect All':'Select All'}
-        </button>
+        <div><div class="bc-title">Career Stats</div><div class="text-xs text-sub">${active.length}/${p.seasons.length} seasons · ${allGames.length} games</div></div>
+        <button class="btn btn-ghost btn-sm" onclick="toggleAllSeasons()">${state.careerSelected.size===p.seasons.length?'Deselect All':'Select All'}</button>
       </div>
-      <div class="s-pills">${toggleBtns}</div>
+      <div class="s-pills">${p.seasons.map(s=>`
+        <button class="s-pill ${state.careerSelected.has(s.id)?'on':''}" onclick="toggleCareerSeason('${s.id}')">${typeDot(s.type)}${s.label} (${s.games.length}G)</button>`).join('')}
+      </div>
     </div>
-
     ${active.length===0?`<div class="empty"><p>Select at least one season above.</p></div>`:`
     <div class="kpi-grid mb3">
-      ${kpiCard('Games',gp,'var(--wave)')}
-      ${kpiCard('Goals',t.goals,'var(--mint)')}
-      ${kpiCard('Assists',t.assists,'var(--foam)')}
-      ${kpiCard('Shoot%',shootPct==='—'?'—':shootPct+'%','var(--mint)')}
-      ${kpiCard('Steals',t.steals,'var(--gold)')}
-      ${kpiCard('Blocks',t.blocks,'var(--foam)')}
-      ${kpiCard('API',api,'var(--gold)')}
-      ${kpiCard('OPI',opi,'var(--wave)')}
-      ${kpiCard('DPI',dpi,'var(--mint)')}
-      ${kpiCard('Save%',savePct==='—'?'—':savePct+'%','var(--rose)')}
+      ${kpiCard('Games',gp,'var(--wave)')}${kpiCard('Goals',t.goals,'var(--mint)')}
+      ${kpiCard('Assists',t.assists,'var(--foam)')}${kpiCard('Shoot%',shootPct==='—'?'—':shootPct+'%','var(--mint)')}
+      ${kpiCard('Steals',t.steals,'var(--gold)')}${kpiCard('Blocks',t.blocks,'var(--foam)')}
+      ${kpiCard('API',api,'var(--gold)')}${kpiCard('OPI',opi,'var(--wave)')}
+      ${kpiCard('DPI',dpi,'var(--mint)')}${kpiCard('Save%',savePct==='—'?'—':savePct+'%','var(--rose)')}
     </div>
-
     <div class="panel mb3">
       <div class="panel-title">Season Breakdown</div>
-      <div id="season-breakdown-cards">${breakdown}</div>
-      <div style="background:rgba(2,132,199,.08);border:1px solid var(--wave);border-radius:10px;padding:12px;margin-top:6px">
-        <div style="font-family:'Barlow Condensed',sans-serif;font-weight:900;letter-spacing:1px;color:var(--foam);font-size:13px;margin-bottom:8px">CAREER TOTAL</div>
-        <div class="stat-grid">
-          <div class="stat"><span class="stat-label">Games</span><span class="stat-val">${gp}</span></div>
-          <div class="stat"><span class="stat-label">Goals</span><span class="stat-val" style="color:var(--mint)">${t.goals}</span></div>
-          <div class="stat"><span class="stat-label">Assists</span><span class="stat-val">${t.assists}</span></div>
-          <div class="stat"><span class="stat-label">Shoot%</span><span class="stat-val">${shootPct==='—'?'—':shootPct+'%'}</span></div>
-          <div class="stat"><span class="stat-label">Steals</span><span class="stat-val">${t.steals}</span></div>
-          <div class="stat"><span class="stat-label">API</span><span class="stat-val" style="color:var(--gold)">${api}</span></div>
-        </div>
-      </div>
-    </div>
-
-    <div class="panel mb3">
-      <div class="panel-title">Career Swim Bests</div>
-      ${SWIM_EVENTS.map(ev=>{
-        const cb = swimBests[ev];
+      ${active.map(s=>{
+        const k=calcKPIs(s.games);
         return `<div style="background:var(--raised);border:1px solid var(--line);border-radius:10px;padding:12px;margin-bottom:8px">
-          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
-            <span style="font-weight:700">${ev}</span>
-            <span class="swim-best">${cb?cb.toFixed(2)+'s':'—'}</span>
-          </div>
+          <div class="row-between mb2"><div><span style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:15px">${s.label}</span> ${typeBadge(s.type)}</div><span class="chip chip-gray">${k.gp} games</span></div>
           <div class="stat-grid">
-            ${active.map(s=>{
-              const b=bestTime(s.swimTimes[ev]||[]);
-              return `<div class="stat"><span class="stat-label" style="font-size:9px">${s.label}</span><span class="stat-val" style="${b&&b===cb?'color:var(--mint)':''}">${b?b.toFixed(2)+'s':'—'}</span></div>`;
-            }).join('')}
+            ${statCard('Goals',k.t.goals)}${statCard('Assists',k.t.assists)}
+            ${statCard('Shoot%',k.shootPct==='—'?'—':k.shootPct+'%')}
+            ${statCard('Steals',k.t.steals)}${statCard('Blocks',k.t.blocks)}${statCard('API',k.api)}
           </div>
         </div>`;
       }).join('')}
+      <div style="background:rgba(2,132,199,.08);border:1px solid var(--wave);border-radius:10px;padding:12px">
+        <div style="font-family:'Barlow Condensed',sans-serif;font-weight:900;letter-spacing:1px;color:var(--foam);font-size:13px;margin-bottom:8px">CAREER TOTAL</div>
+        <div class="stat-grid">
+          ${statCard('Games',gp)}${statCard('Goals',t.goals)}${statCard('Assists',t.assists)}
+          ${statCard('Shoot%',shootPct==='—'?'—':shootPct+'%')}${statCard('Steals',t.steals)}${statCard('API',api)}
+        </div>
+      </div>
     </div>
-
-    <div class="panel">
-      <div class="panel-title">Career Stat Totals</div>
-      <div class="stat-grid">${STAT_FIELDS.map(f=>statCard(f.label,t[f.key])).join('')}</div>
-    </div>`}`;
+    <div class="panel mb3">
+      <div class="panel-title">Career Swim Bests</div>
+      ${SWIM_EVENTS.map(ev=>{
+        const cb=swimBests[ev];
+        return `<div style="background:var(--raised);border:1px solid var(--line);border-radius:10px;padding:12px;margin-bottom:8px">
+          <div class="row-between mb2"><span style="font-weight:700">${ev}</span><span class="swim-best">${cb?cb.toFixed(2)+'s':'—'}</span></div>
+          <div class="stat-grid">${active.map(s=>{const b=bestTime(s.swimTimes[ev]||[]);return statCard(s.label,b?`<span style="${b===cb?'color:var(--mint)':''}">${b.toFixed(2)}s</span>`:'—');}).join('')}</div>
+        </div>`;
+      }).join('')}
+    </div>
+    <div class="panel"><div class="panel-title">Career Stat Totals</div><div class="stat-grid">${STAT_FIELDS.map(f=>statCard(f.label,t[f.key])).join('')}</div></div>`}`;
 }
 
 function toggleCareerSeason(id) {
@@ -662,8 +721,7 @@ function toggleCareerSeason(id) {
 function toggleAllSeasons() {
   const p = state.players.find(x=>x.id===state.selectedPlayerId);
   if (!p) return;
-  if (state.careerSelected.size===p.seasons.length) state.careerSelected = new Set();
-  else state.careerSelected = new Set(p.seasons.map(s=>s.id));
+  state.careerSelected = state.careerSelected.size===p.seasons.length ? new Set() : new Set(p.seasons.map(s=>s.id));
   render();
 }
 
@@ -673,9 +731,8 @@ function openModal(html) {
   document.getElementById('overlay').classList.remove('hidden');
 }
 function closeModal(e) {
-  if (!e || e.target===document.getElementById('overlay')) {
+  if (!e || e.target===document.getElementById('overlay'))
     document.getElementById('overlay').classList.add('hidden');
-  }
 }
 
 function modalAddPlayer() {
@@ -692,11 +749,11 @@ function modalAddPlayer() {
     </div>`);
 }
 
-function saveNewPlayer() {
+async function saveNewPlayer() {
   const name = document.getElementById('pm-name').value.trim();
   if (!name) return;
-  state.players.push({id:uid(),name,number:document.getElementById('pm-num').value,position:document.getElementById('pm-pos').value,seasons:[]});
-  save(); closeModal(); render();
+  const p = await dbAddPlayer(name, document.getElementById('pm-num').value, document.getElementById('pm-pos').value);
+  if (p) { state.players.push(p); closeModal(); render(); }
 }
 
 function modalEditPlayer(id) {
@@ -714,19 +771,20 @@ function modalEditPlayer(id) {
     </div>`);
 }
 
-function saveEditPlayer(id) {
+async function saveEditPlayer(id) {
   const p = state.players.find(x=>x.id===id);
   p.name = document.getElementById('pm-name').value.trim()||p.name;
   p.number = document.getElementById('pm-num').value;
   p.position = document.getElementById('pm-pos').value;
-  save(); closeModal(); render();
+  await dbUpdatePlayer(id, p.name, p.number, p.position);
+  closeModal(); render();
 }
 
-function deletePlayer(id) {
-  if (confirm('Delete this player and all their data?')) {
-    state.players = state.players.filter(p=>p.id!==id);
-    save(); render();
-  }
+async function deletePlayer(id) {
+  if (!confirm('Delete this player and all their data?')) return;
+  await dbDeletePlayer(id);
+  state.players = state.players.filter(p=>p.id!==id);
+  render();
 }
 
 function modalAddSeason() {
@@ -737,17 +795,15 @@ function modalAddSeason() {
       <div class="f-group"><label class="f-label">Season Label</label><input class="f-input" id="sm-label" value="${yr}-${String(yr+1).slice(2)} Season"></div>
       <div class="f-group"><label class="f-label">Season Type</label>
         <select class="f-input" id="sm-type">
-          <option value="junior">Junior (development)</option>
-          <option value="senior">Senior</option>
-          <option value="professional">Professional</option>
-          <option value="standard" selected>Standard</option>
+          <option value="junior">Junior</option><option value="senior">Senior</option>
+          <option value="professional">Professional</option><option value="standard" selected>Standard</option>
         </select>
       </div>
       <div class="f-grid-2">
         <div class="f-group"><label class="f-label">Start Date</label><input type="date" class="f-input" id="sm-start"></div>
         <div class="f-group"><label class="f-label">End Date</label><input type="date" class="f-input" id="sm-end"></div>
       </div>
-      <div class="f-group"><label class="f-label">Notes</label><input class="f-input" id="sm-notes" placeholder="e.g. National Championship year"></div>
+      <div class="f-group"><label class="f-label">Notes</label><input class="f-input" id="sm-notes" placeholder="Optional"></div>
     </div>
     <div class="row" style="gap:8px">
       <button class="btn btn-blue" onclick="saveNewSeason()">Create Season</button>
@@ -755,30 +811,29 @@ function modalAddSeason() {
     </div>`);
 }
 
-function saveNewSeason() {
+async function saveNewSeason() {
   const p = state.players.find(x=>x.id===state.selectedPlayerId);
   const label = document.getElementById('sm-label').value.trim();
   if (!label) return;
-  const s = {
-    id:uid(), label, type:document.getElementById('sm-type').value,
-    startDate:document.getElementById('sm-start').value,
-    endDate:document.getElementById('sm-end').value,
-    notes:document.getElementById('sm-notes').value,
-    games:[], swimTimes:Object.fromEntries(SWIM_EVENTS.map(e=>[e,[]]))
-  };
-  p.seasons.push(s);
-  state.careerSelected.add(s.id);
-  state.selectedSeasonId = s.id;
-  window._seasonTab = 'overview';
-  save(); closeModal(); render();
+  const s = await dbAddSeason(p.id, label, document.getElementById('sm-type').value,
+    document.getElementById('sm-start').value, document.getElementById('sm-end').value,
+    document.getElementById('sm-notes').value);
+  if (s) {
+    p.seasons.push(s);
+    state.careerSelected.add(s.id);
+    state.selectedSeasonId = s.id;
+    window._seasonTab = 'overview';
+    closeModal(); render();
+  }
 }
 
-function deleteSeason(sid) {
+async function deleteSeason(sid) {
   if (!confirm('Delete this season and all its data?')) return;
+  await dbDeleteSeason(sid);
   const p = state.players.find(x=>x.id===state.selectedPlayerId);
   p.seasons = p.seasons.filter(s=>s.id!==sid);
   state.selectedSeasonId = null;
-  save(); render();
+  render();
 }
 
 function modalLogGame(sid) {
@@ -788,40 +843,41 @@ function modalLogGame(sid) {
     <div class="stat-grid mb2">${STAT_FIELDS.filter(f=>f.cat===cat).map(f=>`
       <div class="f-group"><label class="f-label">${f.label}</label>
         <input type="number" min="0" class="f-input" id="gm-${f.key}" value="0">
-      </div>`).join('')}
-    </div>`).join('');
-
+      </div>`).join('')}</div>`).join('');
   openModal(`
     <div class="modal-title">Log Game</div>
     <div class="f-grid mb3">
       <div class="f-group"><label class="f-label">Date</label><input type="date" class="f-input" id="gm-date" value="${today}"></div>
       <div class="f-group"><label class="f-label">Opponent</label><input class="f-input" id="gm-opp" placeholder="Team name"></div>
     </div>
-    <div class="div"></div>
-    ${fields}
+    <div class="div"></div>${fields}
     <div class="row" style="gap:8px;margin-top:12px">
       <button class="btn btn-green" onclick="saveGame('${sid}')">Save Game</button>
       <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
     </div>`);
 }
 
-function saveGame(sid) {
+async function saveGame(sid) {
   const opp = document.getElementById('gm-opp').value.trim();
   if (!opp) return;
-  const p = state.players.find(x=>x.id===state.selectedPlayerId);
-  const s = p.seasons.find(x=>x.id===sid);
   const stats = emptyStats();
   STAT_FIELDS.forEach(f=>{ stats[f.key] = parseInt(document.getElementById('gm-'+f.key).value)||0; });
-  s.games.push({id:uid(), date:document.getElementById('gm-date').value, opponent:opp, stats});
-  save(); closeModal(); render();
+  const g = await dbAddGame(sid, document.getElementById('gm-date').value, opp, stats);
+  if (g) {
+    const p = state.players.find(x=>x.id===state.selectedPlayerId);
+    const s = p.seasons.find(x=>x.id===sid);
+    s.games.push(g);
+    closeModal(); render();
+  }
 }
 
-function deleteGame(sid, gid) {
+async function deleteGame(sid, gid) {
   if (!confirm('Remove this game?')) return;
+  await dbDeleteGame(gid);
   const p = state.players.find(x=>x.id===state.selectedPlayerId);
   const s = p.seasons.find(x=>x.id===sid);
   s.games = s.games.filter(g=>g.id!==gid);
-  save(); render();
+  render();
 }
 
 function modalLogSwim(sid) {
@@ -832,7 +888,7 @@ function modalLogSwim(sid) {
       <div class="f-group"><label class="f-label">Event</label>
         <select class="f-input" id="sw-event">${SWIM_EVENTS.map(e=>`<option>${e}</option>`).join('')}</select>
       </div>
-      <div class="f-group"><label class="f-label">Time (seconds, e.g. 24.85)</label>
+      <div class="f-group"><label class="f-label">Time (seconds e.g. 24.85)</label>
         <input type="number" step="0.01" min="0" class="f-input" id="sw-time" placeholder="0.00">
       </div>
       <div class="f-group"><label class="f-label">Date</label>
@@ -845,27 +901,27 @@ function modalLogSwim(sid) {
     </div>`);
 }
 
-function saveSwim(sid) {
+async function saveSwim(sid) {
   const t = parseFloat(document.getElementById('sw-time').value);
   if (isNaN(t)||t<=0) return;
-  const p = state.players.find(x=>x.id===state.selectedPlayerId);
-  const s = p.seasons.find(x=>x.id===sid);
   const ev = document.getElementById('sw-event').value;
-  s.swimTimes[ev].push({id:uid(), time:t, date:document.getElementById('sw-date').value});
-  save(); closeModal(); render();
+  const entry = await dbAddSwimTime(sid, ev, t, document.getElementById('sw-date').value);
+  if (entry) {
+    const p = state.players.find(x=>x.id===state.selectedPlayerId);
+    const s = p.seasons.find(x=>x.id===sid);
+    s.swimTimes[ev].push(entry);
+    closeModal(); render();
+  }
 }
 
-function deleteSwimTime(sid, ev, tid) {
+async function deleteSwimTime(sid, ev, tid) {
   if (!confirm('Delete this time?')) return;
+  await dbDeleteSwimTime(tid);
   const p = state.players.find(x=>x.id===state.selectedPlayerId);
   const s = p.seasons.find(x=>x.id===sid);
   s.swimTimes[ev] = s.swimTimes[ev].filter(t=>t.id!==tid);
-  save(); render();
+  render();
 }
-
-// ── INIT ──────────────────────────────────────────────────────────────────────
-load();
-render();
 </script>
 </body>
 </html>

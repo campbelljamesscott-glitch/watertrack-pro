@@ -495,7 +495,7 @@ function render() {
   const main = document.getElementById('main');
   if (state.page==='roster') main.innerHTML = renderRoster();
   else if (state.page==='dashboard') main.innerHTML = renderDashboard();
-  else if (state.page==='admin') main.innerHTML = renderAdmin();
+  else if (state.page==='admin') { renderAdmin().then(html => { document.getElementById('main').innerHTML = html; }); }
   else if (state.page==='player') { document.getElementById('main-nav').classList.add('hidden'); main.innerHTML = renderPlayerDetail(); }
 }
 

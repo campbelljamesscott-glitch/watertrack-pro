@@ -194,6 +194,15 @@ input[type=color]{width:36px;height:36px;border-radius:8px;border:2px solid var(
 .impersonate-banner{background:linear-gradient(90deg,#1a0a2e,#0d0520);border-bottom:3px solid #7c3aed;padding:8px 14px;display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap}
 .impersonate-label{font-size:11px;color:#a78bfa;font-weight:700;text-transform:uppercase;letter-spacing:1px}
 .btn-purple{background:#7c3aed;color:#fff;padding:6px 14px;border-radius:7px;border:none;font-size:11px;font-weight:700;text-transform:uppercase;cursor:pointer;white-space:nowrap}
+/* PLAYER DASHBOARD */
+.p-hero{background:linear-gradient(135deg,var(--deep),var(--panel));border:1px solid var(--brand);border-radius:16px;padding:20px 16px;margin-bottom:14px;width:100%;position:relative;overflow:hidden}
+.p-hero::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--brand),var(--brand2))}
+.p-hero-num{font-family:'Barlow Condensed',sans-serif;font-size:72px;font-weight:900;color:var(--brand);opacity:.15;position:absolute;right:10px;top:0;line-height:1}
+.p-tab-bar{display:flex;gap:3px;background:var(--raised);padding:4px;border-radius:9px;width:100%;margin-bottom:14px;overflow-x:auto;-webkit-overflow-scrolling:touch}
+.compare-row{background:var(--raised);border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin-bottom:6px;display:flex;align-items:center;gap:10px}
+.compare-bar-wrap{flex:1;height:6px;background:var(--line);border-radius:3px;overflow:hidden}
+.compare-bar{height:100%;border-radius:3px;background:var(--brand);transition:width .3s}
+.compare-bar.me{background:var(--mint)}
 </style>
 </head>
 <body>
@@ -258,6 +267,19 @@ input[type=color]{width:36px;height:36px;border-radius:8px;border:2px solid var(
     <button class="btn-purple" onclick="stopImpersonating()">← Back to SA</button>
   </div>
   <div class="sa-main" id="sa-main"></div>
+</div>
+
+<!-- PLAYER DASHBOARD SCREEN -->
+<div id="player-screen" class="hidden">
+  <header id="player-topbar" style="background:linear-gradient(90deg,var(--brandbg),#000);border-bottom:2px solid var(--brand);padding:12px 14px;display:flex;align-items:center;gap:10px;position:sticky;top:0;z-index:100;width:100%">
+    <img id="player-club-logo" style="height:32px;width:32px;border-radius:6px;object-fit:cover;display:none" src="" alt="">
+    <div id="player-club-name" style="font-family:'Barlow Condensed',sans-serif;font-size:18px;font-weight:900;letter-spacing:2px;color:var(--foam);text-transform:uppercase"></div>
+    <div style="margin-left:auto;display:flex;gap:6px;align-items:center">
+      <span id="player-name-display" style="font-size:11px;color:var(--sub);font-weight:700;text-transform:uppercase;letter-spacing:.8px"></span>
+      <button class="nav-btn signout" onclick="signOut()">Out</button>
+    </div>
+  </header>
+  <main id="player-main" style="padding:14px;width:100%;overflow-x:hidden"></main>
 </div>
 
 <!-- MODAL -->
@@ -417,7 +439,7 @@ async function loadAllData() {
   const swimTimes = swimRes.data||[];
   state.players = players.map(p => ({
     id:p.id, name:p.name, number:p.number||'', position:p.position||'',
-    teamName: p.team_name||'', userId: p.user_id,
+    teamName: p.team_name||'', playerEmail: p.player_email||'', userId: p.user_id,
     seasons: seasons.filter(s=>s.player_id===p.id).map(s => ({
       id:s.id, label:s.label, type:s.type||'standard',
       startDate:s.start_date||'', endDate:s.end_date||'', notes:s.notes||'',
@@ -428,12 +450,12 @@ async function loadAllData() {
 }
 
 // ── DB OPS ────────────────────────────────────────────────────────────────────
-async function dbAddPlayer(name, number, position, teamName) {
-  const {data,error} = await sb.from('players').insert({name,number,position,team_name:teamName,user_id:state.user.id,club_id:state.currentClub.id}).select().single();
+async function dbAddPlayer(name, number, position, teamName, playerEmail) {
+  const {data,error} = await sb.from('players').insert({name,number,position,team_name:teamName,player_email:playerEmail||null,user_id:state.user.id,club_id:state.currentClub.id}).select().single();
   if (error) { alert('Error: '+error.message); return null; }
-  return {id:data.id,name:data.name,number:data.number||'',position:data.position||'',teamName:data.team_name||'',userId:data.user_id,seasons:[]};
+  return {id:data.id,name:data.name,number:data.number||'',position:data.position||'',teamName:data.team_name||'',playerEmail:data.player_email||'',userId:data.user_id,seasons:[]};
 }
-async function dbUpdatePlayer(id,name,number,position,teamName) { await sb.from('players').update({name,number,position,team_name:teamName}).eq('id',id); }
+async function dbUpdatePlayer(id,name,number,position,teamName,playerEmail) { await sb.from('players').update({name,number,position,team_name:teamName,player_email:playerEmail||null}).eq('id',id); }
 async function dbDeletePlayer(id) { await sb.from('players').delete().eq('id',id); }
 async function dbAddSeason(playerId,label,type,startDate,endDate,notes) {
   const {data,error} = await sb.from('seasons').insert({player_id:playerId,label,type,start_date:startDate,end_date:endDate,notes}).select().single();
@@ -491,11 +513,11 @@ function showPage(page) {
   });
   render();
 }
-function render() {
+async function render() {
   const main = document.getElementById('main');
   if (state.page==='roster') main.innerHTML = renderRoster();
   else if (state.page==='dashboard') main.innerHTML = renderDashboard();
-  else if (state.page==='admin') main.innerHTML = renderAdmin();
+  else if (state.page==='admin') main.innerHTML = await renderAdmin();
   else if (state.page==='player') { document.getElementById('main-nav').classList.add('hidden'); main.innerHTML = renderPlayerDetail(); }
 }
 
@@ -622,7 +644,14 @@ async function renderAdmin() {
             <div class="color-row"><input type="color" id="br-bg" value="${club.background_color||'#07111e'}" oninput="previewBrand()"><span id="br-bg-hex" style="font-size:12px;color:var(--sub)">${club.background_color||'#07111e'}</span></div>
           </div>
         </div>
-        <button class="btn btn-brand btn-sm" onclick="saveBranding()">Save Branding</button>
+        <div class="f-group">
+          <label class="f-label">Player Comparison</label>
+          <div style="display:flex;align-items:center;gap:10px;background:var(--raised);border:1px solid var(--line);border-radius:7px;padding:10px 12px">
+            <input type="checkbox" id="br-comparisons" ${state.currentClub.show_comparisons!==false?'checked':''} style="width:18px;height:18px;cursor:pointer;accent-color:var(--brand)">
+            <label for="br-comparisons" style="font-size:13px;cursor:pointer">Allow players to compare stats with teammates</label>
+          </div>
+        </div>
+        <button class="btn btn-brand btn-sm" onclick="saveBranding()">Save Settings</button>
       </div>
     </div>
 
@@ -665,12 +694,13 @@ async function saveBranding() {
   const primary_color = document.getElementById('br-primary').value;
   const secondary_color = document.getElementById('br-secondary').value;
   const background_color = document.getElementById('br-bg').value;
+  const show_comparisons = document.getElementById('br-comparisons').checked;
   if (!name) return;
-  const {error} = await sb.from('clubs').update({name,logo_url,primary_color,secondary_color,background_color}).eq('id',state.currentClub.id);
+  const {error} = await sb.from('clubs').update({name,logo_url,primary_color,secondary_color,background_color,show_comparisons}).eq('id',state.currentClub.id);
   if (error) { alert('Error: '+error.message); return; }
-  state.currentClub = {...state.currentClub,name,logo_url,primary_color,secondary_color,background_color};
+  state.currentClub = {...state.currentClub,name,logo_url,primary_color,secondary_color,background_color,show_comparisons};
   applyBranding(state.currentClub);
-  alert('Branding saved! ✅');
+  alert('Settings saved! ✅');
   render();
 }
 
@@ -905,6 +935,10 @@ function modalAddPlayer() {
       <div class="f-group"><label class="f-label">Position</label><select class="f-input" id="pm-pos">${POSITIONS.map(p=>`<option>${p}</option>`).join('')}</select></div>
       <div class="f-group"><label class="f-label">Team Name</label><input class="f-input" id="pm-team" placeholder="e.g. U16 Boys"></div>
     </div>
+    <div class="f-group mb3">
+      <label class="f-label">Player Email (so they can log in and see their stats)</label>
+      <input class="f-input" type="email" id="pm-email" placeholder="player@email.com">
+    </div>
     <div class="row" style="gap:8px">
       <button class="btn btn-brand" onclick="saveNewPlayer()">Add Player</button>
       <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
@@ -913,7 +947,7 @@ function modalAddPlayer() {
 async function saveNewPlayer() {
   const name = document.getElementById('pm-name').value.trim();
   if (!name) return;
-  const p = await dbAddPlayer(name, document.getElementById('pm-num').value, document.getElementById('pm-pos').value, document.getElementById('pm-team').value);
+  const p = await dbAddPlayer(name, document.getElementById('pm-num').value, document.getElementById('pm-pos').value, document.getElementById('pm-team').value, document.getElementById('pm-email').value.trim().toLowerCase());
   if (p) { state.players.push(p); closeModal(); render(); }
 }
 function modalEditPlayer(id) {
@@ -926,6 +960,10 @@ function modalEditPlayer(id) {
       <div class="f-group"><label class="f-label">Position</label><select class="f-input" id="pm-pos">${POSITIONS.map(pos=>`<option ${pos===p.position?'selected':''}>${pos}</option>`).join('')}</select></div>
       <div class="f-group"><label class="f-label">Team Name</label><input class="f-input" id="pm-team" value="${p.teamName||''}"></div>
     </div>
+    <div class="f-group mb3">
+      <label class="f-label">Player Email (so they can log in and see their stats)</label>
+      <input class="f-input" type="email" id="pm-email" value="${p.playerEmail||''}" placeholder="player@email.com">
+    </div>
     <div class="row" style="gap:8px">
       <button class="btn btn-brand" onclick="saveEditPlayer('${id}')">Save</button>
       <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
@@ -937,7 +975,8 @@ async function saveEditPlayer(id) {
   p.number=document.getElementById('pm-num').value;
   p.position=document.getElementById('pm-pos').value;
   p.teamName=document.getElementById('pm-team').value;
-  await dbUpdatePlayer(id,p.name,p.number,p.position,p.teamName);
+  p.playerEmail=document.getElementById('pm-email').value.trim().toLowerCase();
+  await dbUpdatePlayer(id,p.name,p.number,p.position,p.teamName,p.playerEmail);
   closeModal(); render();
 }
 async function deletePlayer(id) {
@@ -1442,17 +1481,235 @@ function stopImpersonating() {
   renderSuperAdmin();
 }
 
+// ── PLAYER DASHBOARD ──────────────────────────────────────────────────────────
+let playerState = { player: null, club: null, teammates: [], activeTab: 'dashboard' };
+
+async function checkIsPlayer(user) {
+  const {data} = await sb.from('players').select('*, clubs(*)').eq('player_email', user.email).single();
+  return data || null;
+}
+
+async function enterPlayerDashboard(playerData) {
+  const club = playerData.clubs;
+  playerState.club = club;
+  playerState.activeTab = 'dashboard';
+
+  // Apply club branding
+  if (club) applyBranding(club);
+
+  // Load full player data
+  const {data: seasons} = await sb.from('seasons').select('*').eq('player_id', playerData.id).order('created_at');
+  const {data: games} = await sb.from('games').select('*').order('date');
+  const {data: swimData} = await sb.from('swim_times').select('*').order('date');
+
+  const builtSeasons = (seasons||[]).map(s => ({
+    id:s.id, label:s.label, type:s.type||'standard',
+    startDate:s.start_date||'', endDate:s.end_date||'', notes:s.notes||'',
+    games: (games||[]).filter(g=>g.season_id===s.id).map(g=>({id:g.id,date:g.date||'',opponent:g.opponent,stats:g.stats||emptyStats()})),
+    swimTimes: Object.fromEntries(SWIM_EVENTS.map(ev=>[ev,(swimData||[]).filter(t=>t.season_id===s.id&&t.event===ev).map(t=>({id:t.id,time:t.time,date:t.date||''}))]))
+  }));
+
+  playerState.player = {
+    id:playerData.id, name:playerData.name, number:playerData.number||'',
+    position:playerData.position||'', teamName:playerData.team_name||'',
+    seasons: builtSeasons
+  };
+
+  // Load teammates if club allows comparisons
+  if (club && club.show_comparisons) {
+    const {data: teammates} = await sb.from('players').select('*').eq('club_id', club.id).neq('id', playerData.id);
+    if (teammates) {
+      const tmSeasons = await sb.from('seasons').select('*').in('player_id', teammates.map(t=>t.id));
+      const tmGames = await sb.from('games').select('*');
+      playerState.teammates = teammates.map(tm => ({
+        id:tm.id, name:tm.name, number:tm.number||'', position:tm.position||'',
+        seasons: (tmSeasons.data||[]).filter(s=>s.player_id===tm.id).map(s=>({
+          ...s,
+          games: (tmGames.data||[]).filter(g=>g.season_id===s.id).map(g=>({...g,stats:g.stats||emptyStats()})),
+          swimTimes: Object.fromEntries(SWIM_EVENTS.map(ev=>[ev,[]]))
+        }))
+      }));
+    }
+  }
+
+  // Show player screen
+  ['auth-screen','club-screen','app','superadmin-screen'].forEach(id=>document.getElementById(id).classList.add('hidden'));
+  document.getElementById('player-screen').classList.remove('hidden');
+
+  // Set header
+  document.getElementById('player-name-display').textContent = playerState.player.name;
+  if (club) {
+    document.getElementById('player-club-name').textContent = club.name;
+    if (club.logo_url) { const img = document.getElementById('player-club-logo'); img.src=club.logo_url; img.style.display=''; }
+  }
+
+  renderPlayerDashboard();
+}
+
+function renderPlayerDashboard() {
+  const main = document.getElementById('player-main');
+  const p = playerState.player;
+  const allGames = p.seasons.flatMap(s=>s.games);
+  const {t,gp,shootPct,savePct,api,opi,dpi} = calcKPIs(allGames);
+  const tab = playerState.activeTab;
+
+  const tabs = ['dashboard','seasons','swim'];
+  if (playerState.club?.show_comparisons && playerState.teammates.length > 0) tabs.push('compare');
+
+  const tabBar = `<div class="p-tab-bar">
+    ${tabs.map(tb=>`<button class="tab-btn ${tab===tb?'on':''}" style="min-width:80px" onclick="setPlayerTab('${tb}')">${tb.charAt(0).toUpperCase()+tb.slice(1)}</button>`).join('')}
+  </div>`;
+
+  // HERO
+  const hero = `<div class="p-hero mb3">
+    <div class="p-hero-num">#${p.number}</div>
+    <div style="font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:700;letter-spacing:2px;color:var(--brand);text-transform:uppercase;margin-bottom:4px">${p.position}${p.teamName?' · '+p.teamName:''}</div>
+    <div style="font-family:'Barlow Condensed',sans-serif;font-size:32px;font-weight:900;line-height:1;margin-bottom:12px">${p.name}</div>
+    <div class="kpi-grid">
+      ${kpiCard('Games',gp,'var(--brand)')}
+      ${kpiCard('Goals',t.goals,'var(--mint)')}
+      ${kpiCard('Shoot%',shootPct==='—'?'—':shootPct+'%','var(--mint)')}
+      ${kpiCard('API',api,'var(--gold)')}
+    </div>
+  </div>`;
+
+  let content = '';
+
+  if (tab==='dashboard') {
+    content = `
+      <div class="panel mb3">
+        <div class="panel-title">Career Overview</div>
+        <div class="kpi-grid">
+          ${kpiCard('Seasons',p.seasons.length,'var(--brand)')}
+          ${kpiCard('Goals',t.goals,'var(--mint)')}
+          ${kpiCard('Assists',t.assists,'var(--foam)')}
+          ${kpiCard('Steals',t.steals,'var(--gold)')}
+          ${kpiCard('Blocks',t.blocks,'var(--foam)')}
+          ${kpiCard('Shoot%',shootPct==='—'?'—':shootPct+'%','var(--mint)')}
+          ${kpiCard('API',api,'var(--gold)')}
+          ${kpiCard('OPI',opi,'var(--brand)')}
+          ${kpiCard('DPI',dpi,'var(--mint)')}
+          ${kpiCard('Save%',savePct==='—'?'—':savePct+'%','var(--rose)')}
+        </div>
+      </div>
+      <div class="panel">
+        <div class="panel-title">All Career Stats</div>
+        <div class="stat-grid">${STAT_FIELDS.map(f=>statCard(f.label,t[f.key])).join('')}</div>
+      </div>`;
+  } else if (tab==='seasons') {
+    content = p.seasons.length===0
+      ? `<div class="empty"><div class="empty-icon">📅</div><p>No seasons recorded yet.</p></div>`
+      : p.seasons.map(s => {
+          const k = calcKPIs(s.games);
+          return `<div class="panel mb3">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:8px">
+              <div><div style="font-family:'Barlow Condensed',sans-serif;font-size:18px;font-weight:900">${s.label}</div>
+              <div class="text-xs text-sub">${s.startDate&&s.endDate?s.startDate+' → '+s.endDate:''}</div></div>
+              ${typeBadge(s.type)}
+            </div>
+            <div class="kpi-grid mb3">
+              ${kpiCard('Games',k.gp,'var(--brand)')}${kpiCard('Goals',k.t.goals,'var(--mint)')}
+              ${kpiCard('Shoot%',k.shootPct==='—'?'—':k.shootPct+'%','var(--mint)')}
+              ${kpiCard('API',k.api,'var(--gold)')}
+            </div>
+            <div class="stat-grid">${STAT_FIELDS.map(f=>statCard(f.label,k.t[f.key])).join('')}</div>
+            ${s.games.length>0?`<div class="div"></div>
+              <div class="panel-title">Games</div>
+              ${[...s.games].reverse().map(g=>{
+                const gk=calcKPIs([g]);
+                return `<div style="background:var(--raised);border:1px solid var(--line);border-radius:8px;padding:10px 12px;margin-bottom:6px">
+                  <div class="row-between mb2"><span style="font-weight:700">vs ${g.opponent}</span><span class="text-xs text-sub">${g.date}</span></div>
+                  <div class="stat-grid">${STAT_FIELDS.slice(0,6).map(f=>statCard(f.label,g.stats[f.key]||0)).join('')}${statCard('Shoot%',gk.shootPct==='—'?'—':gk.shootPct+'%')}</div>
+                </div>`;
+              }).join('')}`:''}
+          </div>`;
+        }).join('');
+  } else if (tab==='swim') {
+    const allSwimBests = Object.fromEntries(SWIM_EVENTS.map(ev=>[ev, bestTime(p.seasons.flatMap(s=>s.swimTimes[ev]||[]))]));
+    content = `
+      <div class="panel mb3">
+        <div class="panel-title">Career Swim Bests</div>
+        <div class="kpi-grid mb3">
+          ${SWIM_EVENTS.map(ev=>{const b=allSwimBests[ev]; return kpiCard(ev,b?b.toFixed(2)+'s':'—','var(--mint)');}).join('')}
+        </div>
+      </div>
+      ${p.seasons.map(s=>{
+        const hasSwim = SWIM_EVENTS.some(ev=>(s.swimTimes[ev]||[]).length>0);
+        if (!hasSwim) return '';
+        return `<div class="panel mb3">
+          <div class="panel-title">${s.label}</div>
+          ${SWIM_EVENTS.map(ev=>{
+            const entries=s.swimTimes[ev]||[], best=bestTime(entries);
+            if (!entries.length) return '';
+            return `<div style="background:var(--raised);border:1px solid var(--line);border-radius:10px;padding:12px;margin-bottom:8px">
+              <div class="row-between mb2"><span style="font-weight:700">${ev}</span><span class="swim-best">${best?best.toFixed(2)+'s':'—'}</span></div>
+              <div style="display:flex;flex-wrap:wrap;gap:6px">
+                ${[...entries].sort((a,b)=>a.time-b.time).map(e=>`<span class="chip ${e.time===best?'chip-green':'chip-gray'}">${e.time.toFixed(2)}s</span>`).join('')}
+              </div>
+            </div>`;
+          }).join('')}
+        </div>`;
+      }).join('')}`;
+  } else if (tab==='compare') {
+    const myGames = p.seasons.flatMap(s=>s.games);
+    const myK = calcKPIs(myGames);
+    const compareStats = ['goals','assists','steals','blocks','turnovers','personalFouls'];
+    const allPlayers = [
+      {name:p.name+' (You)', k:myK, isMe:true},
+      ...playerState.teammates.map(tm=>({name:tm.name, k:calcKPIs(tm.seasons.flatMap(s=>s.games)), isMe:false}))
+    ].filter(x=>x.k.gp>0).sort((a,b)=>parseFloat(b.k.api)-parseFloat(a.k.api));
+
+    content = `
+      <div class="panel mb3">
+        <div class="panel-title">Team Rankings — API</div>
+        ${allPlayers.map((x,i)=>`
+          <div class="compare-row">
+            <span style="font-family:'Barlow Condensed',sans-serif;font-size:18px;color:${i===0?'var(--gold)':'var(--sub)'};width:20px;flex-shrink:0">${i+1}</span>
+            <div style="flex:1;min-width:0">
+              <div style="font-weight:700;${x.isMe?'color:var(--mint)':''};white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${x.name}</div>
+              <div class="text-xs text-sub">${x.k.gp} GP</div>
+            </div>
+            <span style="font-family:'Barlow Condensed',sans-serif;font-size:20px;font-weight:900;color:${x.isMe?'var(--mint)':'var(--gold)'};flex-shrink:0">${x.k.api}</span>
+          </div>`).join('')}
+      </div>
+      ${compareStats.map(stat => {
+        const field = STAT_FIELDS.find(f=>f.key===stat);
+        const sorted = [...allPlayers].sort((a,b)=>b.k.t[stat]-a.k.t[stat]);
+        const max = sorted[0]?.k.t[stat]||1;
+        return `<div class="panel mb3">
+          <div class="panel-title">${field?.label||stat}</div>
+          ${sorted.map(x=>`
+            <div style="margin-bottom:8px">
+              <div class="row-between mb2" style="margin-bottom:4px">
+                <span style="font-size:12px;font-weight:700;${x.isMe?'color:var(--mint)':''}">${x.name}</span>
+                <span style="font-family:'Barlow Condensed',sans-serif;font-size:16px;font-weight:900">${x.k.t[stat]}</span>
+              </div>
+              <div class="compare-bar-wrap"><div class="compare-bar ${x.isMe?'me':''}" style="width:${max>0?(x.k.t[stat]/max*100):0}%"></div></div>
+            </div>`).join('')}
+        </div>`;
+      }).join('')}`;
+  }
+
+  main.innerHTML = hero + tabBar + content;
+}
+
+function setPlayerTab(tab) { playerState.activeTab = tab; renderPlayerDashboard(); }
+
 // ── FINAL AFTERLOGIN ──────────────────────────────────────────────────────────
 async function afterLogin(user) {
   state.user = user;
-  await checkPendingInvites(user);
   document.getElementById('auth-screen').classList.add('hidden');
+
   // Check if super admin
   const isSA = await checkSuperAdmin(user);
-  if (isSA) {
-    await enterSuperAdmin();
-    return;
-  }
+  if (isSA) { await enterSuperAdmin(); return; }
+
+  // Check if player
+  const playerData = await checkIsPlayer(user);
+  if (playerData) { await enterPlayerDashboard(playerData); return; }
+
+  // Otherwise coach/admin flow
+  await checkPendingInvites(user);
   await loadClubs();
   if (state.clubs.length===0) showClubScreen();
   else if (state.clubs.length===1) await selectClub(state.clubs[0]);
